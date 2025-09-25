@@ -1,0 +1,50 @@
+.loader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(79, 70, 229, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.12);
+  color: #1f2937;
+  width: 100%;
+}
+
+.spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 3px solid rgba(79, 70, 229, 0.2);
+  border-top-color: #4f46e5;
+  animation: spin 0.8s linear infinite;
+}
+
+.textContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.statusLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.message {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
