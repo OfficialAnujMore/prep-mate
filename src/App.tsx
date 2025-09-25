@@ -1,275 +1,289 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import styles from './App.module.css';
-import { Button } from './components/Button/Button';
-import { TextArea } from './components/TextArea/TextArea';
-import { useSpeechRecognition } from './hooks/useSpeechRecognition';
-
-type SessionPhase =
-  | 'request-permission'
-  | 'paste-description'
-  | 'starting-listener'
-  | 'listening'
-  | 'paused';
+import styles from "./App.module.css";
+import { Button } from "./components/Button/Button";
+import { Loader } from "./components/Loader/Loader";
+import { TextArea } from "./components/TextArea/TextArea";
+import { useInterviewManager } from "./hooks/useInterviewManager";
+import { DIFFICULTY_LEVELS } from "./types/interview";
 
 function App() {
-  const [jobDescription, setJobDescription] = useState('');
-  const [phase, setPhase] = useState<SessionPhase>('request-permission');
-  const [statusMessage, setStatusMessage] = useState<string | null>(
-    'Allow microphone access to begin.',
-  );
-  const [manualPause, setManualPause] = useState(false);
-  const startInFlightRef = useRef(false);
-
   const {
-    isSupported,
-    hasPermission,
-    isListening,
-    transcript,
-    interimTranscript,
-    error: speechError,
-    requestPermission,
-    startListening,
-    stopListening,
-    resetTranscript,
-  } = useSpeechRecognition();
-
-  const hasDescription = jobDescription.trim().length > 0;
-
-  useEffect(() => {
-    if (!isSupported) {
-      setStatusMessage('Speech recognition is not supported in this browser.');
-    }
-  }, [isSupported]);
-
-  useEffect(() => {
-    if (!hasPermission) {
-      setManualPause(false);
-      setPhase('request-permission');
-      setStatusMessage('Allow microphone access to begin.');
-      stopListening();
-      resetTranscript();
-      return;
-    }
-
-    if (!hasDescription) {
-      setManualPause(false);
-      setPhase('paste-description');
-      setStatusMessage('Paste the job description to start voice capture.');
-      stopListening();
-      resetTranscript();
-      return;
-    }
-
-    if (manualPause) {
-      setPhase('paused');
-      setStatusMessage('Voice capture paused. Resume when you are ready.');
-      return;
-    }
-
-    if (isListening) {
-      setPhase('listening');
-      setStatusMessage('Listening — your answers will be transcribed for Gemini Nano.');
-      return;
-    }
-
-    if (startInFlightRef.current) {
-      setPhase('starting-listener');
-      setStatusMessage('Preparing microphone...');
-      return;
-    }
-
-    setPhase('starting-listener');
-    setStatusMessage('Preparing microphone...');
-    startInFlightRef.current = true;
-
-    (async () => {
-      try {
-        await startListening();
-        setPhase('listening');
-        setStatusMessage('Listening — your answers will be transcribed for Gemini Nano.');
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unable to access your microphone right now.';
-        setStatusMessage(message);
-        setManualPause(true);
-        setPhase('paused');
-      } finally {
-        startInFlightRef.current = false;
-      }
-    })();
-  }, [
-    hasPermission,
+    jobDescription,
+    setJobDescription,
     hasDescription,
-    isListening,
-    manualPause,
-    resetTranscript,
-    startListening,
-    stopListening,
-  ]);
+    candidateName,
+    setCandidateName,
+    questionCount,
+    setQuestionCount,
+    difficulty,
+    setDifficulty,
+    statusMessage,
+    speechError,
+    combinedTranscript,
+    startInterview,
+    activeLoaders,
+    isInterviewActive,
+    currentQuestion,
+    currentQuestionIndex,
+    totalQuestions,
+    handlePlayQuestion,
+    handleStartAnswer,
+    handleRestartAnswer,
+    handleSubmitAnswer,
+    isNarrating,
+    isAnswering,
+    interviewComplete,
+    interviewQnA,
+    narrationError,
+    analysisResults,
+    analysisError,
+    endInterview,
+  } = useInterviewManager();
 
-  useEffect(() => {
-    if (!hasDescription) {
-      resetTranscript();
-    }
-  }, [hasDescription, resetTranscript]);
-
-  const combinedTranscript = useMemo(
-    () => [transcript, interimTranscript].filter(Boolean).join(' ').trim(),
-    [interimTranscript, transcript],
+  const hasCandidateName = candidateName.trim().length > 0;
+  const isReadyToStart = hasDescription && hasCandidateName;
+  const difficultyIndex = Math.max(
+    0,
+    DIFFICULTY_LEVELS.indexOf(difficulty)
   );
-
-  const handleRequestPermission = async () => {
-    try {
-      await requestPermission();
-      setStatusMessage('Microphone enabled. Paste the job description next.');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Microphone access was declined.';
-      setStatusMessage(message);
-    }
-  };
-
-  const handlePause = () => {
-    setManualPause(true);
-    stopListening();
-    setPhase('paused');
-    setStatusMessage('Voice capture paused. Resume when you are ready.');
-  };
-
-  const handleResume = async () => {
-    setManualPause(false);
-    setPhase('starting-listener');
-    setStatusMessage('Preparing microphone...');
-    try {
-      await startListening();
-      setPhase('listening');
-      setStatusMessage('Listening — your answers will be transcribed for Gemini Nano.');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to resume listening.';
-      setStatusMessage(message);
-      setManualPause(true);
-      setPhase('paused');
-    }
-  };
-
-  const handleClear = () => {
-    setJobDescription('');
-    setManualPause(false);
-    stopListening();
-    resetTranscript();
-    setPhase(hasPermission ? 'paste-description' : 'request-permission');
-    setStatusMessage(
-      hasPermission ? 'Paste the job description to start voice capture.' : 'Allow microphone access to begin.',
-    );
-  };
-
-  const primaryAction = useMemo(() => {
-    if (!hasPermission) {
-      return {
-        label: 'Enable microphone',
-        onClick: handleRequestPermission,
-        disabled: !isSupported,
-      };
-    }
-
-    if (!hasDescription) {
-      return {
-        label: 'Waiting for job description',
-        onClick: () => {},
-        disabled: true,
-      };
-    }
-
-    if (phase === 'starting-listener') {
-      return {
-        label: 'Preparing...',
-        onClick: () => {},
-        disabled: true,
-      };
-    }
-
-    if (phase === 'listening') {
-      return {
-        label: 'Pause listening',
-        onClick: handlePause,
-        disabled: false,
-      };
-    }
-
-    return {
-      label: 'Resume listening',
-      onClick: handleResume,
-      disabled: false,
-    };
-  }, [handlePause, handleRequestPermission, handleResume, hasDescription, hasPermission, isSupported, phase]);
-
-  const secondaryAction = useMemo(() => {
-    if (!hasPermission && !jobDescription) {
-      return null;
-    }
-    console.log({combinedTranscript});
-
-    return {
-      label: 'Clear',
-      onClick: handleClear,
-      disabled: !jobDescription && !combinedTranscript,
-    };
-    
-  }, [combinedTranscript, handleClear, hasPermission, jobDescription]);
-
+  const difficultyLabel =
+    difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+  const hasActiveSession =
+    isInterviewActive ||
+    interviewQnA.length > 0 ||
+    analysisResults.length > 0 ||
+    activeLoaders.length > 0;
 
   return (
     <div className={styles.app}>
       <div className={styles.panel}>
         <header className={styles.header}>
-          <h1 className={styles.title}>PrepMate</h1>
-          <p className={styles.subtitle}>
-            Paste a job description, then speak your responses. PrepMate will transcribe everything
-            locally so Gemini Nano can analyse it next.
-          </p>
+          {/* Reserved for future hero copy */}
         </header>
 
         <section className={styles.form}>
+          <div className={styles.formControl}>
+            <label className={styles.inputLabel} htmlFor="candidate-name">
+              Your name
+            </label>
+            <input
+              id="candidate-name"
+              className={styles.textInput}
+              type="text"
+              placeholder="e.g., Alex Smith"
+              value={candidateName}
+              onChange={(event) => setCandidateName(event.currentTarget.value)}
+            />
+          </div>
+
+          <div className={styles.sliderGroup}>
+            <label className={styles.sliderLabel} htmlFor="question-count">
+              Number of questions
+            </label>
+            <div className={styles.sliderControl}>
+              <input
+                id="question-count"
+                className={styles.slider}
+                type="range"
+                min={3}
+                max={15}
+                step={1}
+                value={questionCount}
+                onChange={(event) =>
+                  setQuestionCount(Number(event.currentTarget.value))
+                }
+              />
+              <span className={styles.sliderValue}>{questionCount}</span>
+            </div>
+          </div>
+
+          <div className={styles.sliderGroup}>
+            <label className={styles.sliderLabel} htmlFor="difficulty-level">
+              Difficulty
+            </label>
+            <div className={styles.sliderControl}>
+              <input
+                id="difficulty-level"
+                className={styles.slider}
+                type="range"
+                min={0}
+                max={DIFFICULTY_LEVELS.length - 1}
+                step={1}
+                value={difficultyIndex}
+                onChange={(event) =>
+                  setDifficulty(
+                    DIFFICULTY_LEVELS[Number(event.currentTarget.value)]
+                  )
+                }
+              />
+              <span className={styles.sliderValue}>{difficultyLabel}</span>
+            </div>
+          </div>
+
           <TextArea
             label="Job description / prompt"
             placeholder="Paste the prompt you'd like PrepMate to explore with you..."
             value={jobDescription}
             onChange={(event) => setJobDescription(event.currentTarget.value)}
             helperText="Your text stays on this device—nothing gets stored."
-            disabled={!hasPermission}
           />
 
-          <div className={styles.actions}>
+          <Button
+            className={styles.actionButton}
+            variant="primary"
+            onClick={startInterview}
+            disabled={!isReadyToStart || isInterviewActive}
+          >
+            Start interview
+          </Button>
+
+          {hasActiveSession ? (
             <Button
               className={styles.actionButton}
-              variant="primary"
-              onClick={primaryAction.onClick}
-              disabled={primaryAction.disabled}
+              variant="secondary"
+              onClick={endInterview}
             >
-              {primaryAction.label}
+              End interview
             </Button>
-            {secondaryAction ? (
-              <Button
-                className={styles.actionButton}
-                variant="secondary"
-                onClick={secondaryAction.onClick}
-                disabled={secondaryAction.disabled}
-              >
-                {secondaryAction.label}
-              </Button>
-            ) : null}
-          </div>
+          ) : null}
 
-          {statusMessage && <p className={styles.status}>{statusMessage}</p>}
-          {speechError && <p className={styles.error}>{speechError}</p>}
+          {isInterviewActive ? (
+            <div className={styles.interviewSection}>
+              {currentQuestion ? (
+                <div className={styles.currentQuestion}>
+                  <span className={styles.questionLabel}>
+                    Question {currentQuestionIndex + 1} of {totalQuestions}
+                  </span>
+                  <p className={styles.questionText}>{currentQuestion}</p>
+                </div>
+              ) : null}
+
+              {narrationError ? (
+                <p className={styles.narrationError}>{narrationError}</p>
+              ) : null}
+
+              {currentQuestion ? (
+                <div className={styles.questionControls}>
+                  <Button
+                    variant="secondary"
+                    onClick={handlePlayQuestion}
+                    disabled={isNarrating}
+                  >
+                    Play question
+                  </Button>
+
+                  {isAnswering ? (
+                    <>
+                      <Button variant="secondary" onClick={handleRestartAnswer}>
+                        Restart
+                      </Button>
+                      <Button
+                        variant="primary"
+                        onClick={handleSubmitAnswer}
+                        disabled={combinedTranscript.trim().length === 0}
+                      >
+                        Submit answer
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      onClick={handleStartAnswer}
+                      disabled={isNarrating}
+                    >
+                      Start speaking
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <p className={styles.completionMessage}>
+                  {interviewComplete
+                    ? "All questions complete. Review your notes below."
+                    : "Preparing next question..."}
+                </p>
+              )}
+            </div>
+          ) : null}
+
+          {activeLoaders.length > 0 ? (
+            <div className={styles.loaders}>
+              {activeLoaders.map((loader) => (
+                <Loader key={loader.id} messages={loader.messages} />
+              ))}
+            </div>
+          ) : null}
+
+
+
+          {statusMessage ? (
+            <p className={styles.status}>{statusMessage}</p>
+          ) : null}
+          {speechError ? <p className={styles.error}>{speechError}</p> : null}
 
           {combinedTranscript ? (
             <div className={styles.transcript}>
-              <strong className={styles.transcriptTitle}>Captured transcript</strong>
+              <strong className={styles.transcriptTitle}>
+                Captured transcript
+              </strong>
               <p className={styles.transcriptText}>{combinedTranscript}</p>
               <p className={styles.transcriptHint}>
-                This transcription is ready to send to Gemini Nano for deep-dive analysis.
+                This transcription is ready to send to Gemini Nano for deep-dive
+                analysis.
               </p>
             </div>
+          ) : null}
+
+          {interviewQnA.length > 0 && analysisResults.length === 0 ? (
+            <div className={styles.qnaList}>
+              <strong className={styles.qnaTitle}>Interview Q&amp;A</strong>
+              <ul className={styles.qnaItems}>
+                {interviewQnA.map((entry, index) => (
+                  <li key={index} className={styles.qnaItem}>
+                    <div className={styles.qnaField}>
+                      <span className={styles.qnaLabel}>Question:</span>
+                      <span className={styles.qnaValue}>{entry.question}</span>
+                    </div>
+                    <div className={styles.qnaField}>
+                      <span className={styles.qnaLabel}>Your answer:</span>
+                      <span className={styles.qnaValue}>
+                        {entry.answer || "No answer captured."}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {analysisResults.length > 0 ? (
+            <div className={styles.analysisList}>
+              <strong className={styles.analysisTitle}>
+                Answer review &amp; improvements
+              </strong>
+              <ul className={styles.analysisItems}>
+                {analysisResults.map((entry, index) => (
+                  <li key={index} className={styles.analysisItem}>
+                    <div className={styles.analysisField}>
+                      <span className={styles.analysisLabel}>Question:</span>
+                      <span className={styles.analysisValue}>{entry.question}</span>
+                    </div>
+                    <div className={styles.analysisField}>
+                      <span className={styles.analysisLabel}>Your answer:</span>
+                      <span className={styles.analysisValue}>
+                        {entry.answer || "No answer captured."}
+                      </span>
+                    </div>
+                    <div className={styles.analysisField}>
+                      <span className={styles.analysisLabel}>Feedback:</span>
+                      <span className={styles.analysisValue}>{entry.feedback}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {analysisError ? (
+            <p className={styles.analysisError}>{analysisError}</p>
           ) : null}
         </section>
       </div>
