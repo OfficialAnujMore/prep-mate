@@ -54,7 +54,7 @@ export const buildQuestionPrompt = ({
   difficulty,
   candidateName,
 }: BuildQuestionPromptArgs) => {
-  const targetName = candidateName?.trim() || "the candidate";
+  const targetName = candidateName?.trim() || "";
   const difficultyLabel =
     difficulty === "easy"
       ? "an easy, introductory"
@@ -70,7 +70,7 @@ export const buildQuestionPrompt = ({
     `Requirements:\n` +
     `- Calibrate each question to ${difficultyLabel} difficulty.\n` +
     `- Sound like a real interviewer speaking aloud and use second person ("you").\n` +
-    `- Include a variety of openings (e.g., "Can you walk me through...", "How do you approach...", "What's your take on...").\n` +
+    `- The first questions should always be about introducing the candidate with the ${targetName} and the last questions should always be about why you or why you are fit for this role?` +
     `- Keep each question to one sentence, maximum 25 words.\n` +
     `- Do not add numbering, bullets, headings, or explanations.\n\n` +
     `Output format:\n` +
@@ -95,6 +95,7 @@ export const buildAnswerAnalysisPrompt = (question: string, answer: string) =>
   `Question: ${question}\n` +
   `Answer: ${answer || "No answer provided."}\n\n` +
   `Evaluate how well the answer addresses the question, call out any gaps, missing specifics, or misconceptions, and provide concrete suggestions to improve it.\n\n` +
+  `Provide the feedback using second person ("you")` +
   `Return ONLY valid JSON with exactly this schema:\n` +
   `{"feedback":"Your concise feedback here"}\n` +
   `- Use plain sentences.\n` +

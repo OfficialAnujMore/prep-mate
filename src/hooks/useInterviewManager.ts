@@ -13,6 +13,7 @@ import {
   generateKeywords,
   verifyJobDescription,
 } from "../services/interviewService";
+import { COPY } from "../constants/copy";
 import type {
   AnswerFeedback,
   InterviewAnswer,
@@ -64,13 +65,16 @@ type InterviewManagerReturn = {
 };
 
 export function useInterviewManager(): InterviewManagerReturn {
+  const copy = COPY.interviewManager;
+  const { status, errors, loaders, logs } = copy;
+
   const [jobDescription, setJobDescription] = useState("");
   const [candidateName, setCandidateName] = useState("");
-  const [questionCount, setQuestionCount] = useState(3);
+  const [questionCount, setQuestionCount] = useState(5);
   const [difficulty, setDifficulty] = useState<InterviewDifficulty>("medium");
   const [phase, setPhase] = useState<SessionPhase>("request-permission");
   const [statusMessage, setStatusMessage] = useState<string | null>(
-    "Allow microphone access to begin."
+    status.allowMic
   );
   const [manualPause, setManualPause] = useState(false);
   const startInFlightRef = useRef(false);
@@ -119,9 +123,9 @@ export function useInterviewManager(): InterviewManagerReturn {
 
   useEffect(() => {
     if (!isSupported) {
-      setStatusMessage("Speech recognition is not supported in this browser.");
+      setStatusMessage(status.speechUnsupported);
     }
-  }, [isSupported]);
+  }, [isSupported, status.speechUnsupported]);
 
   useEffect(() => {
     if (isInterviewActive) {
@@ -131,7 +135,7 @@ export function useInterviewManager(): InterviewManagerReturn {
     if (!hasPermission) {
       setManualPause(false);
       setPhase("request-permission");
-      setStatusMessage("Allow microphone access to begin.");
+      setStatusMessage(status.allowMic);
       stopListening();
       resetTranscript();
       return;
@@ -140,7 +144,7 @@ export function useInterviewManager(): InterviewManagerReturn {
     if (!hasCandidateName) {
       setManualPause(false);
       setPhase("paste-description");
-      setStatusMessage("Add your name to personalise your interview.");
+      setStatusMessage(status.nameRequired);
       stopListening();
       resetTranscript();
       return;
@@ -149,7 +153,7 @@ export function useInterviewManager(): InterviewManagerReturn {
     if (!hasDescription) {
       setManualPause(false);
       setPhase("paste-description");
-      setStatusMessage("Paste the job description to start voice capture.");
+      setStatusMessage(status.descriptionRequired);
       stopListening();
       resetTranscript();
       return;
@@ -157,40 +161,36 @@ export function useInterviewManager(): InterviewManagerReturn {
 
     if (manualPause) {
       setPhase("paused");
-      setStatusMessage("Voice capture paused. Resume when you are ready.");
+      setStatusMessage(status.paused);
       return;
     }
 
     if (isListening) {
       setPhase("listening");
-      setStatusMessage(
-        "Listening — your answers will be transcribed for Gemini Nano."
-      );
+      setStatusMessage(status.listening);
       return;
     }
 
     if (startInFlightRef.current) {
       setPhase("starting-listener");
-      setStatusMessage("Preparing microphone...");
+      setStatusMessage(status.preparingMic);
       return;
     }
 
     setPhase("starting-listener");
-    setStatusMessage("Preparing microphone...");
+    setStatusMessage(status.preparingMic);
     startInFlightRef.current = true;
 
     (async () => {
       try {
         await startListening();
         setPhase("listening");
-        setStatusMessage(
-          "Listening — your answers will be transcribed for Gemini Nano."
-        );
+        setStatusMessage(status.listening);
       } catch (error) {
         const message =
           error instanceof Error
             ? error.message
-            : "Unable to access your microphone right now.";
+            : errors.microphoneAccess;
         setStatusMessage(message);
         setManualPause(true);
         setPhase("paused");
@@ -199,14 +199,21 @@ export function useInterviewManager(): InterviewManagerReturn {
       }
     })();
   }, [
-    isInterviewActive,
-    hasPermission,
+    errors.microphoneAccess,
     hasCandidateName,
     hasDescription,
+    hasPermission,
+    isInterviewActive,
     isListening,
     manualPause,
     resetTranscript,
     startListening,
+    status.allowMic,
+    status.descriptionRequired,
+    status.listening,
+    status.nameRequired,
+    status.paused,
+    status.preparingMic,
     stopListening,
   ]);
 
@@ -238,7 +245,7 @@ export function useInterviewManager(): InterviewManagerReturn {
     }
 
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      setNarrationError("Speech synthesis is not supported in this browser.");
+      setNarrationError(errors.speechSynthesisUnsupported);
       return Promise.resolve();
     }
 
@@ -258,14 +265,14 @@ export function useInterviewManager(): InterviewManagerReturn {
 
       utterance.onerror = () => {
         setIsNarrating(false);
-        setNarrationError("Unable to play the question audio.");
+        setNarrationError(errors.playQuestion);
         utteranceRef.current = null;
         resolve();
       };
 
       window.speechSynthesis.speak(utterance);
     });
-  }, []);
+  }, [errors.playQuestion, errors.speechSynthesisUnsupported]);
 
   const endInterview = useCallback(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -283,7 +290,7 @@ export function useInterviewManager(): InterviewManagerReturn {
     setIsAnswering(false);
     setIsNarrating(false);
     setNarrationError(null);
-    setStatusMessage("Interview ended. Start again when you're ready.");
+    setStatusMessage(status.interviewEnded);
 
     setGeneratedQuestionsList([]);
     setCurrentQuestionIndex(0);
@@ -295,7 +302,7 @@ export function useInterviewManager(): InterviewManagerReturn {
 
     startInFlightRef.current = false;
     sessionTokenRef.current += 1;
-  }, [resetTranscript, stopListening]);
+  }, [resetTranscript, status.interviewEnded, stopListening]);
 
   const handlePlayQuestion = useCallback(() => {
     if (!currentQuestion) {
@@ -318,15 +325,22 @@ export function useInterviewManager(): InterviewManagerReturn {
       resetTranscript();
       await startListening();
       setIsAnswering(true);
-      setStatusMessage("Recording your answer...");
+      setStatusMessage(status.recordingAnswer);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "Unable to start recording your answer.";
+          : errors.startRecording;
       setStatusMessage(message);
     }
-  }, [currentQuestion, isInterviewActive, resetTranscript, startListening]);
+  }, [
+    currentQuestion,
+    errors.startRecording,
+    isInterviewActive,
+    resetTranscript,
+    startListening,
+    status.recordingAnswer,
+  ]);
 
   const handleRestartAnswer = useCallback(async () => {
     if (!isAnswering) {
@@ -341,13 +355,20 @@ export function useInterviewManager(): InterviewManagerReturn {
         const message =
           error instanceof Error
             ? error.message
-            : "Unable to restart recording.";
+            : errors.restartRecording;
         setStatusMessage(message);
         return;
       }
     }
-    setStatusMessage("Recording restarted. Speak when ready.");
-  }, [isAnswering, isListening, resetTranscript, startListening]);
+    setStatusMessage(status.recordingRestarted);
+  }, [
+    errors.restartRecording,
+    isAnswering,
+    isListening,
+    resetTranscript,
+    startListening,
+    status.recordingRestarted,
+  ]);
 
   const handleSubmitAnswer = useCallback(() => {
     if (!currentQuestion) {
@@ -374,11 +395,8 @@ export function useInterviewManager(): InterviewManagerReturn {
       return;
     }
 
-    const loaderId = "answer-analysis";
-    startLoader(loaderId, [
-      "Reviewing your answers",
-      "Highlighting improvement opportunities",
-    ]);
+    const analysisLoader = loaders.analysis;
+    startLoader(analysisLoader.id, analysisLoader.messages);
     setIsAnalyzingAnswers(true);
     setAnalysisError(null);
 
@@ -389,14 +407,20 @@ export function useInterviewManager(): InterviewManagerReturn {
       const message =
         error instanceof Error
           ? error.message
-          : "Unable to analyse your answers right now.";
+          : errors.analyzeAnswers;
       setAnalysisError(message);
       setAnalysisResults([]);
     } finally {
       setIsAnalyzingAnswers(false);
-      stopLoader(loaderId);
+      stopLoader(analysisLoader.id);
     }
-  }, [interviewQnA, startLoader, stopLoader]);
+  }, [
+    errors.analyzeAnswers,
+    interviewQnA,
+    loaders.analysis,
+    startLoader,
+    stopLoader,
+  ]);
 
   useEffect(() => {
     if (!isInterviewActive) {
@@ -412,13 +436,16 @@ export function useInterviewManager(): InterviewManagerReturn {
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
-      setStatusMessage("Interview complete. Review your answers below.");
+      setStatusMessage(status.interviewComplete);
       return;
     }
 
     setInterviewComplete(false);
     setStatusMessage(
-      `Question ${currentQuestionIndex + 1} of ${generatedQuestionsList.length}`
+      status.questionProgress(
+        currentQuestionIndex + 1,
+        generatedQuestionsList.length
+      )
     );
 
     speakQuestion(currentQuestion);
@@ -429,6 +456,8 @@ export function useInterviewManager(): InterviewManagerReturn {
     isInterviewActive,
     resetTranscript,
     speakQuestion,
+    status.interviewComplete,
+    status.questionProgress,
     stopListening,
   ]);
 
@@ -469,7 +498,7 @@ export function useInterviewManager(): InterviewManagerReturn {
 
     const trimmedName = candidateName.trim();
     if (!trimmedName) {
-      setStatusMessage("Please enter your name before starting the interview.");
+      setStatusMessage(status.nameRequired);
       return;
     }
 
@@ -481,8 +510,8 @@ export function useInterviewManager(): InterviewManagerReturn {
 
     if (availability === "available") {
       const sessionToken = ++sessionTokenRef.current;
-      const keywordLoaderId = "keyword-extraction";
-      const questionLoaderId = "question-generation";
+      const keywordLoader = loaders.keywords;
+      const questionLoader = loaders.questions;
 
       setInterviewQnA([]);
       setGeneratedQuestionsList([]);
@@ -493,10 +522,7 @@ export function useInterviewManager(): InterviewManagerReturn {
       setAnalysisError(null);
       setIsAnalyzingAnswers(false);
 
-      startLoader(keywordLoaderId, [
-        "Analysing keywords",
-        "Extracting relevant keywords from the job description",
-      ]);
+      startLoader(keywordLoader.id, keywordLoader.messages);
 
       let keywordGenerator: { keywords: string[] } | null = null;
 
@@ -508,9 +534,7 @@ export function useInterviewManager(): InterviewManagerReturn {
         }
 
         if (!jdVerification.result) {
-          setStatusMessage(
-            "We couldn't recognise that job description. Try another one."
-          );
+          setStatusMessage(errors.jobDescriptionInvalid);
           return;
         }
 
@@ -523,10 +547,10 @@ export function useInterviewManager(): InterviewManagerReturn {
           return;
         }
         console.error("Failed to generate keywords", error);
-        setStatusMessage("Unable to generate keywords right now.");
+        setStatusMessage(errors.keywordsUnavailable);
         return;
       } finally {
-        stopLoader(keywordLoaderId);
+        stopLoader(keywordLoader.id);
       }
 
       if (sessionToken !== sessionTokenRef.current) {
@@ -538,17 +562,12 @@ export function useInterviewManager(): InterviewManagerReturn {
         !Array.isArray(keywordGenerator.keywords) ||
         keywordGenerator.keywords.length === 0
       ) {
-        console.warn("No keywords returned; skipping question generation.");
-        setStatusMessage(
-          "No keywords found. Please refine the job description."
-        );
+        console.warn(logs.noKeywordsReturned);
+        setStatusMessage(errors.noKeywordsFound);
         return;
       }
 
-      startLoader(questionLoaderId, [
-        "Generating questions",
-        "Crafting tailored interview prompts",
-      ]);
+      startLoader(questionLoader.id, questionLoader.messages);
 
       try {
         const generatedQuestions = await generateInterviewQuestions({
@@ -557,8 +576,6 @@ export function useInterviewManager(): InterviewManagerReturn {
           difficulty,
           candidateName: trimmedName,
         });
-        console.log("Generated questions", generatedQuestions);
-
         if (sessionToken !== sessionTokenRef.current) {
           return;
         }
@@ -572,21 +589,19 @@ export function useInterviewManager(): InterviewManagerReturn {
           setCurrentQuestionIndex(0);
           setInterviewQnA([]);
           setIsInterviewActive(true);
-          setStatusMessage(
-            `Preparing your first interview question, ${trimmedName}...`
-          );
+          setStatusMessage(status.preparingFirstQuestion(trimmedName));
         } else {
-          setStatusMessage("No questions were returned. Try again later.");
+          setStatusMessage(errors.noQuestionsReturned);
         }
       } catch (error) {
         if (sessionToken !== sessionTokenRef.current) {
           return;
         }
         console.error("Failed to generate questions", error);
-        setStatusMessage("Unable to generate interview questions right now.");
+        setStatusMessage(errors.questionsUnavailable);
         return;
       } finally {
-        stopLoader(questionLoaderId);
+        stopLoader(questionLoader.id);
       }
 
       if (sessionToken !== sessionTokenRef.current) {
@@ -595,10 +610,20 @@ export function useInterviewManager(): InterviewManagerReturn {
     }
   }, [
     candidateName,
+    errors.jobDescriptionInvalid,
+    errors.keywordsUnavailable,
+    errors.noKeywordsFound,
+    errors.noQuestionsReturned,
+    errors.questionsUnavailable,
     difficulty,
     jobDescription,
+    loaders.keywords,
+    loaders.questions,
+    logs.noKeywordsReturned,
     questionCount,
     startLoader,
+    status.nameRequired,
+    status.preparingFirstQuestion,
     stopLoader,
   ]);
 
