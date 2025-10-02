@@ -74,6 +74,7 @@ export const COPY = {
       jobDescriptionInvalid: "We couldn't recognise that job description. Try another one.",
       noKeywordsFound: "No keywords found. Please refine the job description.",
       noQuestionsReturned: "No questions were returned. Try again later.",
+      aiUnavailable: "AI features require setup in Chrome. Click the setup button to learn more.",
     },
     loaders: {
       keywords: {
