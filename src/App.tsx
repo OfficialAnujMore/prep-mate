@@ -56,6 +56,7 @@ function App() {
     "unavailable" | "available" | "downloadable" | "downloading" | null
   >(null);
   const [writer, setWriter] = useState<any>(null);
+  const [downloadPct, setDownloadPct] = useState<number | null>(null);
 
   useEffect(() => {
     if (!("Writer" in self)) return;
@@ -90,12 +91,27 @@ function App() {
         w = await (self as any).Writer.create(options);
       } else {
         // downloadable / downloading — monitor progress
+        // mark as downloading so UI can show overlay
+        setAvailability("downloading");
+        setDownloadPct(0);
         w = await (self as any).Writer.create({
           ...options,
           monitor(m: any) {
             m.addEventListener("downloadprogress", (e: any) => {
               const pct = Math.round((e.loaded ?? 0) * 100);
               console.log(`Downloaded ${pct}%`);
+              setDownloadPct(pct);
+              // keep availability as downloading until finished
+              if (pct >= 100) {
+                // slight delay to allow UI to show 100%
+                setTimeout(() => setAvailability("available"), 250);
+                setDownloadPct(null);
+              }
+            });
+            m.addEventListener("downloadcomplete", () => {
+              // ensure we flip state when complete
+              setAvailability("available");
+              setDownloadPct(null);
             });
           },
         });
@@ -118,12 +134,23 @@ function App() {
   return (
     <div className={styles.app}>
 
-
       <button onClick={startWriter} disabled={availability === "unavailable"}>
         Start Writer
       </button>
 
-      
+      {/* overlay shown while writer is downloading */}
+      {availability === "downloading" ? (
+        <div className={styles.overlay} role="status" aria-live="polite">
+          <div className={styles.overlayContent}>
+            <div className={styles.spinner} aria-hidden="true" />
+            <div className={styles.downloadPct}>
+              {downloadPct != null ? `Downloading ${downloadPct}%` : "Downloading..."}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+
       <div className={styles.panel}>
         <header className={styles.header}>
           <h1 className={styles.title}>{COPY.app.title}</h1>
