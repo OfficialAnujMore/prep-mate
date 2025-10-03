@@ -280,6 +280,8 @@ function App() {
   const showDownloadOverlay =
     availability === "downloading" || awaitingActivation;
   const overlayProgress = Math.max(0, Math.min(100, downloadPct ?? 0));
+  console.log({overlayProgress}, {showDownloadOverlay});
+  
   useEffect(() => {
     console.log({ availability });
   }, [availability]);
