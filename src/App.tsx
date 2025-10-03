@@ -114,7 +114,7 @@ function App() {
 
     const baseOptions: Record<string, unknown> = {
       sharedContext: "Prime the AI interview coach for candidate sessions.",
-      tone: "professional",
+      tone: "formal",
       format: "plain-text",
       length: "medium",
     };
