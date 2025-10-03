@@ -17,7 +17,7 @@ import type {
 declare const Writer: {
   availability: () => Promise<"available" | "unavailable" | "requires-install">;
   create: (
-    options: Record<string, unknown>
+    options: Record<string, unknown> & { apiToken?: string }
   ) => Promise<{ write: (prompt: string) => Promise<string> }>;
 };
 
@@ -46,16 +46,17 @@ const sanitizeWriterResponse = (raw: string) =>
 export const generateKeywords = async (
   jobDescription: string
 ): Promise<KeywordResponse> => {
-  const writer = await Writer.create(KEYWORD_PROMPT_OPTIONS);
+  const writer = await Writer.create({ ...KEYWORD_PROMPT_OPTIONS, apiToken: import.meta.env.VITE_WRITER_API_TOKEN });
   const result = await writer.write(buildKeywordPrompt(jobDescription));
   const cleaned = sanitizeWriterResponse(result);
+  console.log(`Generated keywords are: ${cleaned}`);
   return JSON.parse(cleaned);
 };
 
 export const verifyJobDescription = async (
   jobDescription: string
 ): Promise<JobDescriptionVerificationResponse> => {
-  const writer = await Writer.create(JOB_DESCRIPTION_PROMPT_OPTIONS);
+  const writer = await Writer.create({ ...JOB_DESCRIPTION_PROMPT_OPTIONS, apiToken: import.meta.env.VITE_WRITER_API_TOKEN });
   const result = await writer.write(analyseJD(jobDescription));
 
   const cleaned = sanitizeWriterResponse(result);
@@ -74,7 +75,7 @@ export const generateInterviewQuestions = async ({
   difficulty,
   candidateName,
 }: GenerateQuestionParams): Promise<QuestionResponse> => {
-  const writer = await Writer.create(QUESTION_PROMPT_OPTIONS);
+  const writer = await Writer.create({ ...QUESTION_PROMPT_OPTIONS, apiToken: import.meta.env.VITE_WRITER_API_TOKEN });
   const result = await writer.write(
     buildQuestionPrompt({
       keywords,
@@ -84,6 +85,7 @@ export const generateInterviewQuestions = async ({
     })
   );
   const cleaned = sanitizeWriterResponse(result);
+  console.log(`Generated questions are: ${cleaned}`);
   return JSON.parse(cleaned);
 };
 
@@ -109,7 +111,7 @@ export const analyzeAnswersWithWriter = async (
     throw new Error("Writer API is unavailable in this environment.");
   }
 
-  const writer = await Writer.create(ANSWER_ANALYSIS_PROMPT_OPTIONS);
+  const writer = await Writer.create({ ...ANSWER_ANALYSIS_PROMPT_OPTIONS, apiToken: import.meta.env.VITE_WRITER_API_TOKEN });
   const feedback: AnswerFeedback[] = [];
 
   for (const entry of entries) {

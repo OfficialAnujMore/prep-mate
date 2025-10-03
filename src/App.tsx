@@ -129,10 +129,10 @@ function App() {
           ) : null}
         </section>
       </div>
-      <SetupInstructionsModal
+      {/* <SetupInstructionsModal
         isOpen={showSetupModal}
         onClose={() => setShowSetupModal(false)}
-      />
+      /> */}
     </div>
   );
 }
