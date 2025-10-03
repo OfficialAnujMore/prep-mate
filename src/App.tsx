@@ -190,6 +190,16 @@ function App() {
     [setAwaitingActivation]
   );
 
+  const startDownload = useCallback(() => {
+    if (writerInitRef.current || writer) {
+      return;
+    }
+
+    writerInitRef.current = true;
+    setAwaitingActivation(false);
+    void prepareWriter(true);
+  }, [prepareWriter, writer]);
+
   useEffect(() => {
     if (awaitingActivation) {
       setShowDownloadOverlay(true);
@@ -226,9 +236,7 @@ function App() {
         return;
       }
       activated = true;
-      writerInitRef.current = true;
-      setAwaitingActivation(false);
-      void prepareWriter(true);
+      startDownload();
     };
 
     const handlePointer = () => activate();
@@ -242,7 +250,7 @@ function App() {
       window.removeEventListener("pointerdown", handlePointer);
       window.removeEventListener("keydown", handleKey);
     };
-  }, [availability, prepareWriter, writer]);
+  }, [availability, prepareWriter, startDownload, writer]);
 
   useEffect(() => {
     return () => {
@@ -295,11 +303,6 @@ function App() {
   }, [availability, downloadPct]);
 
   const overlayProgress = Math.max(0, Math.min(100, downloadPct ?? 0));
-  console.log({overlayProgress}, {showDownloadOverlay});
-  
-  useEffect(() => {
-    console.log({ availability });
-  }, [availability]);
 
   return (
     <div className={styles.app}>
@@ -316,9 +319,7 @@ function App() {
             <Button
               className={styles.actionButton}
               variant="secondary"
-              onClick={() => {
-                console.log("Download initiated");
-              }}
+              onClick={startDownload}
             >
               {"Proceed"}
             </Button>
