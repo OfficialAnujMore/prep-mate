@@ -60,11 +60,11 @@ function App() {
     analysisResults.length > 0 ||
     activeLoaders.length > 0;
 
-  const [availability, setAvailability] = useState<WriterAvailability>(
-    "checking"
-  );
+  const [availability, setAvailability] =
+    useState<WriterAvailability>("checking");
   const [writer, setWriter] = useState<any>(null);
   const [downloadPct, setDownloadPct] = useState<number | null>(null);
+  const [awaitingActivation, setAwaitingActivation] = useState(false);
   const writerInitRef = useRef(false);
   const downloadTimerRef = useRef<number | null>(null);
 
@@ -107,88 +107,117 @@ function App() {
     };
   }, []);
 
-  const prepareWriter = useCallback(
-    async (needsDownload: boolean) => {
-      if (!("Writer" in self)) {
-        return;
-      }
-
-      const baseOptions: Record<string, unknown> = {
-        sharedContext:
-          "This is an email to acquaintances about an upcoming event.",
-        tone: "casual",
-        format: "plain-text",
-        length: "medium",
-      };
-
-      try {
-        if (needsDownload) {
-          setAvailability("downloading");
-          setDownloadPct(0);
-
-          baseOptions.monitor = (monitor: any) => {
-            const updateProgress = (fraction: number | null) => {
-              if (fraction == null) {
-                return;
-              }
-
-              const pct = Math.max(0, Math.min(100, Math.round(fraction * 100)));
-              setDownloadPct(pct);
-            };
-
-            monitor.addEventListener("downloadprogress", (event: any) => {
-              if (typeof event.loaded === "number") {
-                updateProgress(event.loaded);
-              }
-            });
-
-            monitor.addEventListener("downloadcomplete", () => {
-              updateProgress(1);
-            });
-          };
-        }
-
-        const createdWriter = await (self as any).Writer.create(baseOptions);
-        setWriter(createdWriter);
-        if (needsDownload) {
-          if (downloadTimerRef.current != null) {
-            window.clearTimeout(downloadTimerRef.current);
-            downloadTimerRef.current = null;
-          }
-
-          setDownloadPct(100);
-          downloadTimerRef.current = window.setTimeout(() => {
-            setDownloadPct(null);
-            setAvailability("available");
-            downloadTimerRef.current = null;
-          }, 320);
-        } else {
-          setAvailability("available");
-          setDownloadPct(null);
-        }
-      } catch (err) {
-        console.error("Failed to create Writer", err);
-        setAvailability("error");
-        setDownloadPct(null);
-        writerInitRef.current = false;
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
+  const prepareWriter = useCallback(async (needsDownload: boolean) => {
     if (!("Writer" in self)) {
       return;
     }
 
-    if (writer || writerInitRef.current) {
+    const baseOptions: Record<string, unknown> = {
+      sharedContext: "Prime the AI interview coach for candidate sessions.",
+      tone: "professional",
+      format: "plain-text",
+      length: "medium",
+    };
+
+    try {
+      if (needsDownload) {
+        setAvailability("downloading");
+        setDownloadPct(0);
+
+        baseOptions.monitor = (monitor: any) => {
+          const updateProgress = (fraction: number | null) => {
+            if (fraction == null) {
+              return;
+            }
+
+            const pct = Math.max(0, Math.min(100, Math.round(fraction * 100)));
+            setDownloadPct(pct);
+          };
+
+          monitor.addEventListener("downloadprogress", (event: any) => {
+            if (typeof event.loaded === "number") {
+              updateProgress(event.loaded);
+            }
+          });
+
+          monitor.addEventListener("downloadcomplete", () => {
+            updateProgress(1);
+          });
+        };
+      }
+
+      const createdWriter = await (self as any).Writer.create(baseOptions);
+      setWriter(createdWriter);
+      if (needsDownload) {
+        if (downloadTimerRef.current != null) {
+          window.clearTimeout(downloadTimerRef.current);
+          downloadTimerRef.current = null;
+        }
+
+        setDownloadPct(100);
+        downloadTimerRef.current = window.setTimeout(() => {
+          setDownloadPct(null);
+          setAvailability("available");
+          downloadTimerRef.current = null;
+        }, 320);
+      } else {
+        setAvailability("available");
+        setDownloadPct(null);
+      }
+    } catch (err) {
+      console.error("Failed to create Writer", err);
+      if (err instanceof DOMException && err.name === "NotAllowedError") {
+        setAvailability("downloadable");
+        setAwaitingActivation(true);
+      } else {
+        setAvailability("error");
+        setDownloadPct(null);
+      }
+      writerInitRef.current = false;
+    }
+  }, [setAwaitingActivation]);
+
+  useEffect(() => {
+    if (!("Writer" in self)) {
+      setAwaitingActivation(false);
       return;
     }
 
-    if (availability === "downloadable" || availability === "downloading") {
-      writerInitRef.current = true;
-      void prepareWriter(true);
+    if (writer || writerInitRef.current) {
+      setAwaitingActivation(false);
+      return;
     }
+
+    if (availability !== "downloadable" && availability !== "downloading") {
+      setAwaitingActivation(false);
+      return;
+    }
+
+    setAwaitingActivation(true);
+
+    let activated = false;
+
+    const activate = () => {
+      if (activated) {
+        return;
+      }
+      activated = true;
+      writerInitRef.current = true;
+      setAwaitingActivation(false);
+      void prepareWriter(true);
+    };
+
+    const handlePointer = () => activate();
+    const handleKey = () => activate();
+
+    window.addEventListener("pointerdown", handlePointer, { once: true });
+    window.addEventListener("keydown", handleKey, { once: true });
+
+    return () => {
+      activated = true;
+      window.removeEventListener("pointerdown", handlePointer);
+      window.removeEventListener("keydown", handleKey);
+    };
   }, [availability, prepareWriter, writer]);
 
   useEffect(() => {
@@ -241,23 +270,33 @@ function App() {
     }
   }, [availability, downloadPct]);
 
+  const showDownloadOverlay =
+    availability === "downloading" || awaitingActivation;
+  const overlayProgress = Math.max(0, Math.min(100, downloadPct ?? 0));
+
   return (
     <div className={styles.app}>
-      {availability === "downloading" ? (
+      {showDownloadOverlay ? (
         <div className={styles.overlay} role="status" aria-live="polite">
           <div className={styles.overlayContent}>
-            <p className={styles.overlayHeading}>AI Interview Coach — Prepmate</p>
+            <p className={styles.overlayHeading}>
+              AI Interview Coach — Prepmate
+            </p>
             <p className={styles.overlayBody}>
               downloading necessary content for AI Interview Coach - Prepmate
             </p>
             <div className={styles.progressTrack}>
               <div
                 className={styles.progressBar}
-                style={{ width: `${Math.max(0, Math.min(100, downloadPct ?? 0))}%` }}
+                style={{
+                  width: `${overlayProgress}%`,
+                }}
               />
             </div>
             <span className={styles.progressValue}>
-              {downloadPct != null ? `${Math.max(0, Math.min(100, downloadPct))}%` : "Preparing"}
+              {downloadPct != null
+                ? `${Math.max(0, Math.min(100, downloadPct))}%`
+                : "Preparing"}
             </span>
           </div>
         </div>
@@ -273,12 +312,20 @@ function App() {
         <div className={styles.panel}>
           <div
             className={`${styles.writerStatusBar} ${
-              styles[`writerStatus${writerStatus.tone.charAt(0).toUpperCase()}${writerStatus.tone.slice(1)}`]
+              styles[
+                `writerStatus${writerStatus.tone
+                  .charAt(0)
+                  .toUpperCase()}${writerStatus.tone.slice(1)}`
+              ]
             }`}
           >
             <span
               className={`${styles.statusDot} ${
-                styles[`statusDot${writerStatus.tone.charAt(0).toUpperCase()}${writerStatus.tone.slice(1)}`]
+                styles[
+                  `statusDot${writerStatus.tone
+                    .charAt(0)
+                    .toUpperCase()}${writerStatus.tone.slice(1)}`
+                ]
               }`}
               aria-hidden="true"
             />
