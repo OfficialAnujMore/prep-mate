@@ -23,25 +23,7 @@ import type {
 import { useSpeechRecognition } from "./useSpeechRecognition";
 
 type SessionPhase =
-  |   ], [
-    candidateName,
-    errors.jobDescriptionInvalid,
-    errors.keywordsUnavailable,
-    errors.noKeywordsFound,
-    errors.noQuestionsReturned,
-    errors.questionsUnavailable,
-    errors.aiUnavailable,
-    difficulty,
-    jobDescription,
-    loaders.keywords,
-    loaders.questions,
-    logs.noKeywordsReturned,
-    questionCount,
-    startLoader,
-    status.nameRequired,
-    status.preparingFirstQuestion,
-    stopLoader,
-  ]);n"
+  | "request-permission"
   | "paste-description"
   | "starting-listener"
   | "listening"
@@ -505,11 +487,8 @@ export function useInterviewManager(): InterviewManagerReturn {
   }, []);
 
   const startInterview = useCallback(async () => {
-    console.log('Starting interview session...');
-    
     const trimmedName = candidateName.trim();
     if (!trimmedName) {
-      console.log('Interview initialization failed: Missing candidate name');
       setStatusMessage(status.nameRequired);
       return;
     }
@@ -517,13 +496,6 @@ export function useInterviewManager(): InterviewManagerReturn {
     const sessionToken = ++sessionTokenRef.current;
     const keywordLoader = loaders.keywords;
     const questionLoader = loaders.questions;
-
-    console.log('Initializing interview session:', {
-      candidateName: trimmedName,
-      questionCount,
-      difficulty,
-      sessionToken
-    });
 
     setInterviewQnA([]);
     setGeneratedQuestionsList([]);
@@ -535,12 +507,10 @@ export function useInterviewManager(): InterviewManagerReturn {
     setIsAnalyzingAnswers(false);
 
     // Initialize Writer API with progress updates
-    console.log('Starting Writer API initialization...');
     try {
       const writer = await initializeWriter({
         ...DEFAULT_WRITER_OPTIONS,
         onDownloadProgress: (progress) => {
-          console.log(`Model download progress: ${progress}%`);
           setModelDownloadProgress(progress);
         }
       });
@@ -550,7 +520,6 @@ export function useInterviewManager(): InterviewManagerReturn {
         return;
       }
       
-      console.log('Writer API initialized successfully');
       writerRef.current = writer;
       
       let keywordGenerator: { keywords: string[] } | null = null;
@@ -633,115 +602,11 @@ export function useInterviewManager(): InterviewManagerReturn {
         stopLoader(questionLoader.id);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to initialize Writer:', {
-        error: errorMessage,
-        stack: error instanceof Error ? error.stack : 'No stack trace',
-        timestamp: new Date().toISOString()
-      });
+      console.error("Failed to initialize Writer", error);
       setStatusMessage(errors.aiUnavailable);
     }
 
-    if (availability === "available") {
-      const sessionToken = ++sessionTokenRef.current;
-      const keywordLoader = loaders.keywords;
-      const questionLoader = loaders.questions;
 
-      setInterviewQnA([]);
-      setGeneratedQuestionsList([]);
-      setCurrentQuestionIndex(0);
-      setInterviewComplete(false);
-      setIsInterviewActive(false);
-      setAnalysisResults([]);
-      setAnalysisError(null);
-      setIsAnalyzingAnswers(false);
-
-      startLoader(keywordLoader.id, keywordLoader.messages);
-
-      let keywordGenerator: { keywords: string[] } | null = null;
-
-      try {
-        const jdVerification = await verifyJobDescription(jobDescription);
-
-        if (sessionToken !== sessionTokenRef.current) {
-          return;
-        }
-
-        if (!jdVerification.result) {
-          setStatusMessage(errors.jobDescriptionInvalid);
-          return;
-        }
-
-        keywordGenerator = await generateKeywords(jobDescription);
-        if (sessionToken !== sessionTokenRef.current) {
-          return;
-        }
-      } catch (error) {
-        if (sessionToken !== sessionTokenRef.current) {
-          return;
-        }
-        console.error("Failed to generate keywords", error);
-        setStatusMessage(errors.keywordsUnavailable);
-        return;
-      } finally {
-        stopLoader(keywordLoader.id);
-      }
-
-      if (sessionToken !== sessionTokenRef.current) {
-        return;
-      }
-
-      if (
-        !keywordGenerator ||
-        !Array.isArray(keywordGenerator.keywords) ||
-        keywordGenerator.keywords.length === 0
-      ) {
-        console.warn(logs.noKeywordsReturned);
-        setStatusMessage(errors.noKeywordsFound);
-        return;
-      }
-
-      startLoader(questionLoader.id, questionLoader.messages);
-
-      try {
-        const generatedQuestions = await generateInterviewQuestions({
-          keywords: keywordGenerator.keywords,
-          questionCount,
-          difficulty,
-          candidateName: trimmedName,
-        });
-        if (sessionToken !== sessionTokenRef.current) {
-          return;
-        }
-
-        if (
-          generatedQuestions &&
-          Array.isArray(generatedQuestions.questions) &&
-          generatedQuestions.questions.length > 0
-        ) {
-          setGeneratedQuestionsList(generatedQuestions.questions);
-          setCurrentQuestionIndex(0);
-          setInterviewQnA([]);
-          setIsInterviewActive(true);
-          setStatusMessage(status.preparingFirstQuestion(trimmedName));
-        } else {
-          setStatusMessage(errors.noQuestionsReturned);
-        }
-      } catch (error) {
-        if (sessionToken !== sessionTokenRef.current) {
-          return;
-        }
-        console.error("Failed to generate questions", error);
-        setStatusMessage(errors.questionsUnavailable);
-        return;
-      } finally {
-        stopLoader(questionLoader.id);
-      }
-
-      if (sessionToken !== sessionTokenRef.current) {
-        return;
-      }
-    }
   }, [
     candidateName,
     errors.jobDescriptionInvalid,
