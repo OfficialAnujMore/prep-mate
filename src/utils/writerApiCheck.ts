@@ -58,6 +58,14 @@ function logDebugInfo(message: string, debugInfo: DebugInfo) {
 
 export async function checkWriterApiAvailability(): Promise<WriterApiStatus> {
   const debugInfo = getDebugInfo();
+  console.log('Writer test one and only one');
+  
+  if ('Writer' in self) {
+    console.log(self, 'Writer');
+    
+  // The Writer API is supported.
+}
+
 
   // Check if running in Chrome
   const isChrome = debugInfo.browser === 'Chrome';
@@ -72,12 +80,12 @@ export async function checkWriterApiAvailability(): Promise<WriterApiStatus> {
     return result;
   }
 
-  // Check Chrome version (Writer API requires Chrome 121+)
-  if (debugInfo.chromeVersion && debugInfo.chromeVersion < 121) {
+  // Check Chrome version (Writer API requires Chrome 160+)
+  if (debugInfo.chromeVersion && debugInfo.chromeVersion < 160) {
     const result: WriterApiStatus = {
       isAvailable: false,
       needsSetup: true,
-      error: `Chrome version 121+ required (current: ${debugInfo.chromeVersion})`,
+      error: `Chrome version 160+ required (current: ${debugInfo.chromeVersion}). Please update Chrome or use Chrome Canary.`,
       debugInfo
     };
     logDebugInfo('Chrome version check failed', debugInfo);
@@ -89,7 +97,7 @@ export async function checkWriterApiAvailability(): Promise<WriterApiStatus> {
     const result: WriterApiStatus = {
       isAvailable: false,
       needsSetup: true,
-      error: 'Writer API is not available. Please ensure Origin Trial is properly configured.',
+      error: 'Writer API is not available. Please ensure:\n1. You are using Chrome 160+ or Chrome Canary\n2. Writer API flag is enabled at chrome://flags/#writer-api-for-gemini-nano\n3. Origin Trial token is properly configured',
       debugInfo
     };
     logDebugInfo('Writer API not found in window object', debugInfo);
