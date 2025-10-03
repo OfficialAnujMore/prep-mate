@@ -8,7 +8,15 @@ import { StatusMessages } from "./components/StatusMessages/StatusMessages";
 import { TranscriptPanel } from "./components/TranscriptPanel/TranscriptPanel";
 import { InterviewQnAList } from "./components/InterviewQnAList/InterviewQnAList";
 import { AnalysisList } from "./components/AnalysisList/AnalysisList";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+type WriterAvailability =
+  | "checking"
+  | "unavailable"
+  | "available"
+  | "downloadable"
+  | "downloading"
+  | "error";
 
 function App() {
   const {
@@ -52,86 +60,144 @@ function App() {
     analysisResults.length > 0 ||
     activeLoaders.length > 0;
 
-  const [availability, setAvailability] = useState<
-    "unavailable" | "available" | "downloadable" | "downloading" | null
-  >(null);
+  const [availability, setAvailability] = useState<WriterAvailability>(
+    "checking"
+  );
   const [writer, setWriter] = useState<any>(null);
   const [downloadPct, setDownloadPct] = useState<number | null>(null);
+  const writerInitRef = useRef(false);
+  const downloadTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!("Writer" in self)) return;
-    // availability() is async—wrap in IIFE
+    if (!("Writer" in self)) {
+      setAvailability("unavailable");
+      return;
+    }
+
+    let cancelled = false;
+
     (async () => {
       try {
-        console.log("Writer supported");
-        const a = await (self as any).Writer.availability();
-        setAvailability(a);
+        const status = await (self as any).Writer.availability();
+        if (cancelled) {
+          return;
+        }
+
+        if (status === "available") {
+          setAvailability("available");
+          return;
+        }
+
+        if (status === "downloadable" || status === "downloading") {
+          setAvailability(status);
+          return;
+        }
+
+        setAvailability("unavailable");
       } catch (err) {
         console.error("Failed to check Writer availability", err);
-        setAvailability("unavailable");
+        if (!cancelled) {
+          setAvailability("error");
+        }
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const startWriter = useCallback(async () => {
-    if (!("Writer" in self)) return;
-    if (availability === "unavailable" || availability == null) return;
+  const prepareWriter = useCallback(
+    async (needsDownload: boolean) => {
+      if (!("Writer" in self)) {
+        return;
+      }
 
-    const options = {
-      sharedContext:
-        "This is an email to acquaintances about an upcoming event.",
-      tone: "casual",
-      format: "plain-text",
-      length: "medium",
-    };
+      const baseOptions: Record<string, unknown> = {
+        sharedContext:
+          "This is an email to acquaintances about an upcoming event.",
+        tone: "casual",
+        format: "plain-text",
+        length: "medium",
+      };
 
-    try {
-      let w;
-      if (availability === "available") {
-        w = await (self as any).Writer.create(options);
-      } else {
-        // downloadable / downloading — monitor progress
-        // mark as downloading so UI can show overlay
-        console.log('1');
-        
-        setAvailability("downloading");
-        setDownloadPct(0);
-        w = await (self as any).Writer.create({
-          ...options,
-          monitor(m: any) {
-            console.log('2');
-            m.addEventListener("downloadprogress", (e: any) => {
-              console.log('3');
-              const pct = Math.round((e.loaded ?? 0) * 100);
-              console.log(`Downloaded ${pct}%`);
-              console.log('4');
+      try {
+        if (needsDownload) {
+          setAvailability("downloading");
+          setDownloadPct(0);
+
+          baseOptions.monitor = (monitor: any) => {
+            const updateProgress = (fraction: number | null) => {
+              if (fraction == null) {
+                return;
+              }
+
+              const pct = Math.max(0, Math.min(100, Math.round(fraction * 100)));
               setDownloadPct(pct);
-              // keep availability as downloading until finished
-              if (pct >= 100) {
+            };
 
-                // slight delay to allow UI to show 100%
-                setTimeout(() => setAvailability("available"), 250);
-                setDownloadPct(null);
-                console.log('5');
+            monitor.addEventListener("downloadprogress", (event: any) => {
+              if (typeof event.loaded === "number") {
+                updateProgress(event.loaded);
               }
             });
-            m.addEventListener("downloadcomplete", () => {
-              // ensure we flip state when complete
-              setAvailability("available");
-              setDownloadPct(null);
-              console.log('6');
+
+            monitor.addEventListener("downloadcomplete", () => {
+              updateProgress(1);
             });
-          },
-        });
+          };
+        }
+
+        const createdWriter = await (self as any).Writer.create(baseOptions);
+        setWriter(createdWriter);
+        if (needsDownload) {
+          if (downloadTimerRef.current != null) {
+            window.clearTimeout(downloadTimerRef.current);
+            downloadTimerRef.current = null;
+          }
+
+          setDownloadPct(100);
+          downloadTimerRef.current = window.setTimeout(() => {
+            setDownloadPct(null);
+            setAvailability("available");
+            downloadTimerRef.current = null;
+          }, 320);
+        } else {
+          setAvailability("available");
+          setDownloadPct(null);
+        }
+      } catch (err) {
+        console.error("Failed to create Writer", err);
+        setAvailability("error");
+        setDownloadPct(null);
+        writerInitRef.current = false;
       }
-      setWriter(w);
-    } catch (err) {
-      console.error("Failed to create Writer", err);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!("Writer" in self)) {
+      return;
     }
-  }, [availability]);
+
+    if (writer || writerInitRef.current) {
+      return;
+    }
+
+    if (availability === "downloadable" || availability === "downloading") {
+      writerInitRef.current = true;
+      void prepareWriter(true);
+    }
+  }, [availability, prepareWriter, writer]);
 
   useEffect(() => {
     return () => {
+      if (downloadTimerRef.current != null) {
+        window.clearTimeout(downloadTimerRef.current);
+        downloadTimerRef.current = null;
+      }
+
       // cleanup if you created a writer
       try {
         writer?.destroy?.();
@@ -139,90 +205,140 @@ function App() {
     };
   }, [writer]);
 
-  useEffect(()=>{
-    console.log({downloadPct});
-    
-  }, [downloadPct])
+  const writerStatus = useMemo(() => {
+    switch (availability) {
+      case "available":
+        return {
+          label: "AI engine ready",
+          tone: "ready" as const,
+        };
+      case "downloading":
+        return {
+          label: `Downloading resources ${downloadPct ?? 0}%`,
+          tone: "progress" as const,
+        };
+      case "downloadable":
+        return {
+          label: "Preparing AI engine…",
+          tone: "progress" as const,
+        };
+      case "checking":
+        return {
+          label: "Checking AI engine…",
+          tone: "progress" as const,
+        };
+      case "error":
+        return {
+          label: "We couldn't initialise the AI engine. Refresh to try again.",
+          tone: "warn" as const,
+        };
+      case "unavailable":
+      default:
+        return {
+          label: "AI engine unavailable in this browser.",
+          tone: "warn" as const,
+        };
+    }
+  }, [availability, downloadPct]);
 
   return (
     <div className={styles.app}>
-
-      <button onClick={startWriter} disabled={availability === "unavailable"}>
-        Start Writer
-      </button>
-
-      {/* overlay shown while writer is downloading */}
       {availability === "downloading" ? (
         <div className={styles.overlay} role="status" aria-live="polite">
           <div className={styles.overlayContent}>
-            <div className={styles.spinner} aria-hidden="true" />
-            <div className={styles.downloadPct}>
-              {downloadPct != null ? `Downloading ${downloadPct}%` : "Downloading..."}
+            <p className={styles.overlayHeading}>AI Interview Coach — Prepmate</p>
+            <p className={styles.overlayBody}>
+              downloading necessary content for AI Interview Coach - Prepmate
+            </p>
+            <div className={styles.progressTrack}>
+              <div
+                className={styles.progressBar}
+                style={{ width: `${Math.max(0, Math.min(100, downloadPct ?? 0))}%` }}
+              />
             </div>
+            <span className={styles.progressValue}>
+              {downloadPct != null ? `${Math.max(0, Math.min(100, downloadPct))}%` : "Preparing"}
+            </span>
           </div>
         </div>
       ) : null}
 
-
-      <div className={styles.panel}>
-        <header className={styles.header}>
+      <div className={styles.shell}>
+        <section className={styles.hero}>
+          <span className={styles.heroBadge}>AI Interview Coach</span>
           <h1 className={styles.title}>{COPY.app.title}</h1>
           <p className={styles.subtitle}>{COPY.app.subtitle}</p>
-        </header>
-
-        <section className={styles.form}>
-          <SessionControls
-            candidateName={candidateName}
-            onCandidateNameChange={setCandidateName}
-            questionCount={questionCount}
-            onQuestionCountChange={setQuestionCount}
-            difficulty={difficulty}
-            onDifficultyChange={setDifficulty}
-            jobDescription={jobDescription}
-            onJobDescriptionChange={setJobDescription}
-            onStartInterview={startInterview}
-            onEndInterview={endInterview}
-            canStart={isReadyToStart}
-            disableStart={isInterviewActive}
-            showEndButton={hasActiveSession}
-          />
-
-          <ActiveInterviewSection
-            isInterviewActive={isInterviewActive}
-            currentQuestion={currentQuestion}
-            currentQuestionIndex={currentQuestionIndex}
-            totalQuestions={totalQuestions}
-            narrationError={narrationError}
-            isNarrating={isNarrating}
-            isAnswering={isAnswering}
-            interviewComplete={interviewComplete}
-            combinedTranscript={combinedTranscript}
-            onPlayQuestion={handlePlayQuestion}
-            onStartAnswer={handleStartAnswer}
-            onRestartAnswer={handleRestartAnswer}
-            onSubmitAnswer={handleSubmitAnswer}
-          />
-
-          <LoaderList loaders={activeLoaders} />
-
-          <StatusMessages
-            statusMessage={statusMessage}
-            speechError={speechError}
-          />
-
-          <TranscriptPanel transcript={combinedTranscript} />
-
-          <InterviewQnAList
-            entries={interviewQnA}
-            show={analysisResults.length === 0}
-          />
-
-          <AnalysisList entries={analysisResults} />
-
-          {analysisError ? (
-            <p className={styles.analysisError}>{analysisError}</p>
-          ) : null}
         </section>
+
+        <div className={styles.panel}>
+          <div
+            className={`${styles.writerStatusBar} ${
+              styles[`writerStatus${writerStatus.tone.charAt(0).toUpperCase()}${writerStatus.tone.slice(1)}`]
+            }`}
+          >
+            <span
+              className={`${styles.statusDot} ${
+                styles[`statusDot${writerStatus.tone.charAt(0).toUpperCase()}${writerStatus.tone.slice(1)}`]
+              }`}
+              aria-hidden="true"
+            />
+            <span className={styles.statusText}>{writerStatus.label}</span>
+          </div>
+
+          <section className={styles.form}>
+            <SessionControls
+              candidateName={candidateName}
+              onCandidateNameChange={setCandidateName}
+              questionCount={questionCount}
+              onQuestionCountChange={setQuestionCount}
+              difficulty={difficulty}
+              onDifficultyChange={setDifficulty}
+              jobDescription={jobDescription}
+              onJobDescriptionChange={setJobDescription}
+              onStartInterview={startInterview}
+              onEndInterview={endInterview}
+              canStart={isReadyToStart}
+              disableStart={isInterviewActive}
+              showEndButton={hasActiveSession}
+            />
+
+            <ActiveInterviewSection
+              isInterviewActive={isInterviewActive}
+              currentQuestion={currentQuestion}
+              currentQuestionIndex={currentQuestionIndex}
+              totalQuestions={totalQuestions}
+              narrationError={narrationError}
+              isNarrating={isNarrating}
+              isAnswering={isAnswering}
+              interviewComplete={interviewComplete}
+              combinedTranscript={combinedTranscript}
+              onPlayQuestion={handlePlayQuestion}
+              onStartAnswer={handleStartAnswer}
+              onRestartAnswer={handleRestartAnswer}
+              onSubmitAnswer={handleSubmitAnswer}
+            />
+
+            <LoaderList loaders={activeLoaders} />
+
+            <StatusMessages
+              statusMessage={statusMessage}
+              speechError={speechError}
+            />
+
+            <TranscriptPanel transcript={combinedTranscript} />
+
+            <InterviewQnAList
+              entries={interviewQnA}
+              show={analysisResults.length === 0}
+            />
+
+            <AnalysisList entries={analysisResults} />
+
+            {analysisError ? (
+              <p className={styles.analysisError}>{analysisError}</p>
+            ) : null}
+          </section>
+        </div>
       </div>
     </div>
   );
