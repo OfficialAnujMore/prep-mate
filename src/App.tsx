@@ -92,26 +92,34 @@ function App() {
       } else {
         // downloadable / downloading — monitor progress
         // mark as downloading so UI can show overlay
+        console.log('1');
+        
         setAvailability("downloading");
         setDownloadPct(0);
         w = await (self as any).Writer.create({
           ...options,
           monitor(m: any) {
+            console.log('2');
             m.addEventListener("downloadprogress", (e: any) => {
+              console.log('3');
               const pct = Math.round((e.loaded ?? 0) * 100);
               console.log(`Downloaded ${pct}%`);
+              console.log('4');
               setDownloadPct(pct);
               // keep availability as downloading until finished
               if (pct >= 100) {
+
                 // slight delay to allow UI to show 100%
                 setTimeout(() => setAvailability("available"), 250);
                 setDownloadPct(null);
+                console.log('5');
               }
             });
             m.addEventListener("downloadcomplete", () => {
               // ensure we flip state when complete
               setAvailability("available");
               setDownloadPct(null);
+              console.log('6');
             });
           },
         });
@@ -130,6 +138,11 @@ function App() {
       } catch {}
     };
   }, [writer]);
+
+  useEffect(()=>{
+    console.log({downloadPct});
+    
+  }, [downloadPct])
 
   return (
     <div className={styles.app}>
