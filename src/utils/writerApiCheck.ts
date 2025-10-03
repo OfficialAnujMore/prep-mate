@@ -51,7 +51,11 @@ function logDebugInfo(message: string, debugInfo: DebugInfo) {
   console.group('🏷️ Origin Trial Token Details');
   console.log('Number of origin trial meta tags:', metaTags.length);
   metaTags.forEach((tag, index) => {
-    console.log(`Token ${index + 1}:`, tag.getAttribute('content'));
+    const content = tag.getAttribute('content');
+    console.log(`Token ${index + 1}:`, content);
+    if (content?.includes('VITE_WRITER_API_TOKEN') || content?.includes('<%')) {
+      console.warn('⚠️ Token not properly interpolated:', content);
+    }
   });
   console.log('Token from debugInfo:', debugInfo.originTrialToken);
   console.groupEnd();
@@ -91,7 +95,7 @@ export async function checkWriterApiAvailability(): Promise<WriterApiStatus> {
   }
 
   // Check Chrome version (Writer API requires Chrome 160+)
-  if (debugInfo.chromeVersion && debugInfo.chromeVersion < 160) {
+  if (debugInfo.chromeVersion && debugInfo.chromeVersion < 121) {
     const result: WriterApiStatus = {
       isAvailable: false,
       needsSetup: true,
