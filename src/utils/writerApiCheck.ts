@@ -45,7 +45,17 @@ function logDebugInfo(message: string, debugInfo: DebugInfo) {
   console.log('📊 Chrome Version:', debugInfo.chromeVersion || 'N/A');
   console.log('🔑 Writer API Present:', debugInfo.writerApiPresent);
   console.log('📅 Timestamp:', debugInfo.timestamp);
-  console.log('🏷️ Origin Trial Token:', debugInfo.originTrialToken ? 'Present' : 'Missing');
+  
+  // Detailed token debugging
+  const metaTags = document.querySelectorAll('meta[name="origin-trial"]');
+  console.group('🏷️ Origin Trial Token Details');
+  console.log('Number of origin trial meta tags:', metaTags.length);
+  metaTags.forEach((tag, index) => {
+    console.log(`Token ${index + 1}:`, tag.getAttribute('content'));
+  });
+  console.log('Token from debugInfo:', debugInfo.originTrialToken);
+  console.groupEnd();
+  
   console.log('🔍 Full User Agent:', debugInfo.userAgent);
   if (debugInfo.availabilityResponse) {
     console.log('✨ Availability Response:', debugInfo.availabilityResponse);
