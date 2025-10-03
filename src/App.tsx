@@ -8,7 +8,7 @@ import { StatusMessages } from "./components/StatusMessages/StatusMessages";
 import { TranscriptPanel } from "./components/TranscriptPanel/TranscriptPanel";
 import { InterviewQnAList } from "./components/InterviewQnAList/InterviewQnAList";
 import { AnalysisList } from "./components/AnalysisList/AnalysisList";
-// import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 function App() {
   const {
@@ -52,93 +52,94 @@ function App() {
     analysisResults.length > 0 ||
     activeLoaders.length > 0;
 
-  // const [availability, setAvailability] = useState<
-  //   "unavailable" | "available" | "downloadable" | "downloading" | null
-  // >(null);
-  // const [writer, setWriter] = useState<any>(null);
-  // const [downloadPct, setDownloadPct] = useState<number | null>(null);
+  const [availability, setAvailability] = useState<
+    "unavailable" | "available" | "downloadable" | "downloading" | null
+  >(null);
+  const [writer, setWriter] = useState<any>(null);
+  const [downloadPct, setDownloadPct] = useState<number | null>(null);
 
-  // useEffect(() => {
-  //   if (!("Writer" in self)) return;
-  //   // availability() is async—wrap in IIFE
-  //   (async () => {
-  //     try {
-  //       console.log("Writer supported");
-  //       const a = await (self as any).Writer.availability();
-  //       setAvailability(a);
-  //     } catch (err) {
-  //       console.error("Failed to check Writer availability", err);
-  //       setAvailability("unavailable");
-  //     }
-  //   })();
-  // }, []);
+  useEffect(() => {
+    if (!("Writer" in self)) return;
+    // availability() is async—wrap in IIFE
+    (async () => {
+      try {
+        console.log("Writer supported");
+        const a = await (self as any).Writer.availability();
+        setAvailability(a);
+      } catch (err) {
+        console.error("Failed to check Writer availability", err);
+        setAvailability("unavailable");
+      }
+    })();
+  }, []);
 
-  // const startWriter = useCallback(async () => {
-  //   if (!("Writer" in self)) return;
-  //   if (availability === "unavailable" || availability == null) return;
+  const startWriter = useCallback(async () => {
+    if (!("Writer" in self)) return;
+    if (availability === "unavailable" || availability == null) return;
 
-  //   const options = {
-  //     sharedContext:
-  //       "This is an email to acquaintances about an upcoming event.",
-  //     tone: "casual",
-  //     format: "plain-text",
-  //     length: "medium",
-  //   };
+    const options = {
+      sharedContext:
+        "This is an email to acquaintances about an upcoming event.",
+      tone: "casual",
+      format: "plain-text",
+      length: "medium",
+    };
 
-  //   try {
-  //     let w;
-  //     if (availability === "available") {
-  //       w = await (self as any).Writer.create(options);
-  //     } else {
-  //       // downloadable / downloading — monitor progress
-  //       // mark as downloading so UI can show overlay
-  //       setAvailability("downloading");
-  //       setDownloadPct(0);
-  //       w = await (self as any).Writer.create({
-  //         ...options,
-  //         monitor(m: any) {
-  //           m.addEventListener("downloadprogress", (e: any) => {
-  //             const pct = Math.round((e.loaded ?? 0) * 100);
-  //             console.log(`Downloaded ${pct}%`);
-  //             setDownloadPct(pct);
-  //             // keep availability as downloading until finished
-  //             if (pct >= 100) {
-  //               // slight delay to allow UI to show 100%
-  //               setTimeout(() => setAvailability("available"), 250);
-  //               setDownloadPct(null);
-  //             }
-  //           });
-  //           m.addEventListener("downloadcomplete", () => {
-  //             // ensure we flip state when complete
-  //             setAvailability("available");
-  //             setDownloadPct(null);
-  //           });
-  //         },
-  //       });
-  //     }
-  //     setWriter(w);
-  //   } catch (err) {
-  //     console.error("Failed to create Writer", err);
-  //   }
-  // }, [availability]);
+    try {
+      let w;
+      if (availability === "available") {
+        w = await (self as any).Writer.create(options);
+      } else {
+        // downloadable / downloading — monitor progress
+        // mark as downloading so UI can show overlay
+        setAvailability("downloading");
+        setDownloadPct(0);
+        w = await (self as any).Writer.create({
+          ...options,
+          monitor(m: any) {
+            m.addEventListener("downloadprogress", (e: any) => {
+              const pct = Math.round((e.loaded ?? 0) * 100);
+              console.log(`Downloaded ${pct}%`);
+              setDownloadPct(pct);
+              // keep availability as downloading until finished
+              if (pct >= 100) {
+                // slight delay to allow UI to show 100%
+                setTimeout(() => setAvailability("available"), 250);
+                setDownloadPct(null);
+              }
+            });
+            m.addEventListener("downloadcomplete", () => {
+              // ensure we flip state when complete
+              setAvailability("available");
+              setDownloadPct(null);
+            });
+          },
+        });
+      }
+      setWriter(w);
+    } catch (err) {
+      console.error("Failed to create Writer", err);
+    }
+  }, [availability]);
 
-  // useEffect(() => {
-  //   return () => {
-  //     // cleanup if you created a writer
-  //     try {
-  //       writer?.destroy?.();
-  //     } catch {}
-  //   };
-  // }, [writer]);
+  useEffect(() => {
+    return () => {
+      // cleanup if you created a writer
+      try {
+        writer?.destroy?.();
+      } catch {}
+    };
+  }, [writer]);
 
   return (
     <div className={styles.app}>
-      {/* <button onClick={startWriter} disabled={availability === "unavailable"}>
+
+      <button onClick={startWriter} disabled={availability === "unavailable"}>
         Start Writer
-      </button> */}
+      </button>
 
       {/* overlay shown while writer is downloading */}
-      {/* {availability === "downloading" ? (
+      {availability === "downloading" ? (
         <div className={styles.overlay} role="status" aria-live="polite">
           <div className={styles.overlayContent}>
             <div className={styles.spinner} aria-hidden="true" />
@@ -147,7 +148,8 @@ function App() {
             </div>
           </div>
         </div>
-      ) : null} */}
+      ) : null}
+
 
       <div className={styles.panel}>
         <header className={styles.header}>
