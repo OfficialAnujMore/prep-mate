@@ -66,6 +66,7 @@ function App() {
   const [writer, setWriter] = useState<any>(null);
   const [downloadPct, setDownloadPct] = useState<number | null>(null);
   const [awaitingActivation, setAwaitingActivation] = useState(false);
+  const [showDownloadOverlay, setShowDownloadOverlay] = useState(false);
   const writerInitRef = useRef(false);
   const downloadTimerRef = useRef<number | null>(null);
 
@@ -125,6 +126,7 @@ function App() {
         if (needsDownload) {
           setAvailability("downloading");
           setDownloadPct(0);
+          setShowDownloadOverlay(true);
 
           baseOptions.monitor = (monitor: any) => {
             const updateProgress = (fraction: number | null) => {
@@ -163,26 +165,41 @@ function App() {
           downloadTimerRef.current = window.setTimeout(() => {
             setDownloadPct(null);
             setAvailability("available");
+            setShowDownloadOverlay(false);
             downloadTimerRef.current = null;
           }, 320);
         } else {
           setAvailability("available");
           setDownloadPct(null);
+          setShowDownloadOverlay(false);
         }
       } catch (err) {
         console.error("Failed to create Writer", err);
         if (err instanceof DOMException && err.name === "NotAllowedError") {
           setAvailability("downloadable");
           setAwaitingActivation(true);
+          setShowDownloadOverlay(true);
         } else {
           setAvailability("error");
           setDownloadPct(null);
+          setShowDownloadOverlay(false);
         }
         writerInitRef.current = false;
       }
     },
     [setAwaitingActivation]
   );
+
+  useEffect(() => {
+    if (awaitingActivation) {
+      setShowDownloadOverlay(true);
+      return;
+    }
+
+    if (availability !== "downloading") {
+      setShowDownloadOverlay(false);
+    }
+  }, [availability, awaitingActivation]);
 
   useEffect(() => {
     if (!("Writer" in self)) {
@@ -277,8 +294,6 @@ function App() {
     }
   }, [availability, downloadPct]);
 
-  const showDownloadOverlay =
-    availability === "downloading" || awaitingActivation;
   const overlayProgress = Math.max(0, Math.min(100, downloadPct ?? 0));
   console.log({overlayProgress}, {showDownloadOverlay});
   
