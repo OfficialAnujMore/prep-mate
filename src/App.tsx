@@ -9,6 +9,7 @@ import { TranscriptPanel } from "./components/TranscriptPanel/TranscriptPanel";
 import { InterviewQnAList } from "./components/InterviewQnAList/InterviewQnAList";
 import { AnalysisList } from "./components/AnalysisList/AnalysisList";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Button from "./components/Button/Button";
 
 type WriterAvailability =
   | "checking"
@@ -107,75 +108,81 @@ function App() {
     };
   }, []);
 
-  const prepareWriter = useCallback(async (needsDownload: boolean) => {
-    if (!("Writer" in self)) {
-      return;
-    }
-
-    const baseOptions: Record<string, unknown> = {
-      sharedContext: "Prime the AI interview coach for candidate sessions.",
-      tone: "formal",
-      format: "plain-text",
-      length: "medium",
-    };
-
-    try {
-      if (needsDownload) {
-        setAvailability("downloading");
-        setDownloadPct(0);
-
-        baseOptions.monitor = (monitor: any) => {
-          const updateProgress = (fraction: number | null) => {
-            if (fraction == null) {
-              return;
-            }
-
-            const pct = Math.max(0, Math.min(100, Math.round(fraction * 100)));
-            setDownloadPct(pct);
-          };
-
-          monitor.addEventListener("downloadprogress", (event: any) => {
-            if (typeof event.loaded === "number") {
-              updateProgress(event.loaded);
-            }
-          });
-
-          monitor.addEventListener("downloadcomplete", () => {
-            updateProgress(1);
-          });
-        };
+  const prepareWriter = useCallback(
+    async (needsDownload: boolean) => {
+      if (!("Writer" in self)) {
+        return;
       }
 
-      const createdWriter = await (self as any).Writer.create(baseOptions);
-      setWriter(createdWriter);
-      if (needsDownload) {
-        if (downloadTimerRef.current != null) {
-          window.clearTimeout(downloadTimerRef.current);
-          downloadTimerRef.current = null;
+      const baseOptions: Record<string, unknown> = {
+        sharedContext: "Prime the AI interview coach for candidate sessions.",
+        tone: "formal",
+        format: "plain-text",
+        length: "medium",
+      };
+
+      try {
+        if (needsDownload) {
+          setAvailability("downloading");
+          setDownloadPct(0);
+
+          baseOptions.monitor = (monitor: any) => {
+            const updateProgress = (fraction: number | null) => {
+              if (fraction == null) {
+                return;
+              }
+
+              const pct = Math.max(
+                0,
+                Math.min(100, Math.round(fraction * 100))
+              );
+              setDownloadPct(pct);
+            };
+
+            monitor.addEventListener("downloadprogress", (event: any) => {
+              if (typeof event.loaded === "number") {
+                updateProgress(event.loaded);
+              }
+            });
+
+            monitor.addEventListener("downloadcomplete", () => {
+              updateProgress(1);
+            });
+          };
         }
 
-        setDownloadPct(100);
-        downloadTimerRef.current = window.setTimeout(() => {
-          setDownloadPct(null);
+        const createdWriter = await (self as any).Writer.create(baseOptions);
+        setWriter(createdWriter);
+        if (needsDownload) {
+          if (downloadTimerRef.current != null) {
+            window.clearTimeout(downloadTimerRef.current);
+            downloadTimerRef.current = null;
+          }
+
+          setDownloadPct(100);
+          downloadTimerRef.current = window.setTimeout(() => {
+            setDownloadPct(null);
+            setAvailability("available");
+            downloadTimerRef.current = null;
+          }, 320);
+        } else {
           setAvailability("available");
-          downloadTimerRef.current = null;
-        }, 320);
-      } else {
-        setAvailability("available");
-        setDownloadPct(null);
+          setDownloadPct(null);
+        }
+      } catch (err) {
+        console.error("Failed to create Writer", err);
+        if (err instanceof DOMException && err.name === "NotAllowedError") {
+          setAvailability("downloadable");
+          setAwaitingActivation(true);
+        } else {
+          setAvailability("error");
+          setDownloadPct(null);
+        }
+        writerInitRef.current = false;
       }
-    } catch (err) {
-      console.error("Failed to create Writer", err);
-      if (err instanceof DOMException && err.name === "NotAllowedError") {
-        setAvailability("downloadable");
-        setAwaitingActivation(true);
-      } else {
-        setAvailability("error");
-        setDownloadPct(null);
-      }
-      writerInitRef.current = false;
-    }
-  }, [setAwaitingActivation]);
+    },
+    [setAwaitingActivation]
+  );
 
   useEffect(() => {
     if (!("Writer" in self)) {
@@ -273,6 +280,9 @@ function App() {
   const showDownloadOverlay =
     availability === "downloading" || awaitingActivation;
   const overlayProgress = Math.max(0, Math.min(100, downloadPct ?? 0));
+  useEffect(() => {
+    console.log({ availability });
+  }, [availability]);
 
   return (
     <div className={styles.app}>
@@ -283,8 +293,18 @@ function App() {
               AI Interview Coach — Prepmate
             </p>
             <p className={styles.overlayBody}>
-              downloading necessary content for AI Interview Coach - Prepmate
+              Downloading necessary content for AI Interview Coach - Prepmate
             </p>
+
+            <Button
+              className={styles.actionButton}
+              variant="secondary"
+              onClick={() => {
+                console.log("Download initiated");
+              }}
+            >
+              {"Proceed"}
+            </Button>
             <div className={styles.progressTrack}>
               <div
                 className={styles.progressBar}
