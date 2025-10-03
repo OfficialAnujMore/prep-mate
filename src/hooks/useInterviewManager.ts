@@ -491,11 +491,15 @@ export function useInterviewManager(): InterviewManagerReturn {
   const startInterview = useCallback(async () => {
     const writerGlobal = (self as typeof self & { Writer?: WriterGlobal })
       .Writer;
+    
+    console.log(writerGlobal);
 
     if (!writerGlobal) {
+      console.log('Failed to check writer');
+      
       return;
     }
-
+    
     const trimmedName = candidateName.trim();
     if (!trimmedName) {
       setStatusMessage(status.nameRequired);
@@ -503,6 +507,7 @@ export function useInterviewManager(): InterviewManagerReturn {
     }
 
     const availability = await writerGlobal.availability();
+    console.log('availability', availability);
 
     if (availability === "unavailable") {
       return;
