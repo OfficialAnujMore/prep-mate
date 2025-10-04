@@ -267,6 +267,11 @@ function App() {
     };
   }, [writer]);
 
+  useEffect(()=>{
+    console.log({showDownloadOverlay});
+    
+  },[showDownloadOverlay])
+
   const writerStatus = useMemo(() => {
     switch (availability) {
       case "available":
