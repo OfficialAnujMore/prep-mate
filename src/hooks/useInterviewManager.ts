@@ -68,14 +68,12 @@ export function useInterviewManager(): InterviewManagerReturn {
   const copy = COPY.interviewManager;
   const { status, errors, loaders, logs } = copy;
 
-  const [jobDescription, setJobDescription] = useState("");
   const [candidateName, setCandidateName] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
   const [questionCount, setQuestionCount] = useState(5);
   const [difficulty, setDifficulty] = useState<InterviewDifficulty>("medium");
   const [phase, setPhase] = useState<SessionPhase>("request-permission");
-  const [statusMessage, setStatusMessage] = useState<string | null>(
-    status.allowMic
-  );
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [manualPause, setManualPause] = useState(false);
   const startInFlightRef = useRef(false);
   const [activeLoaders, setActiveLoaders] = useState<LoaderConfig[]>([]);
@@ -94,6 +92,8 @@ export function useInterviewManager(): InterviewManagerReturn {
   const [isAnalyzingAnswers, setIsAnalyzingAnswers] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const sessionTokenRef = useRef(0);
+
+  // const { writerStatus, onStartDownload } = useDownloadManager();
 
   const startLoader = useCallback((id: string, messages: string[]) => {
     setActiveLoaders((prev) => {
@@ -188,9 +188,7 @@ export function useInterviewManager(): InterviewManagerReturn {
         setStatusMessage(status.listening);
       } catch (error) {
         const message =
-          error instanceof Error
-            ? error.message
-            : errors.microphoneAccess;
+          error instanceof Error ? error.message : errors.microphoneAccess;
         setStatusMessage(message);
         setManualPause(true);
         setPhase("paused");
@@ -239,40 +237,43 @@ export function useInterviewManager(): InterviewManagerReturn {
     return generatedQuestionsList[currentQuestionIndex];
   }, [currentQuestionIndex, generatedQuestionsList]);
 
-  const speakQuestion = useCallback((text: string) => {
-    if (!text) {
-      return Promise.resolve();
-    }
+  const speakQuestion = useCallback(
+    (text: string) => {
+      if (!text) {
+        return Promise.resolve();
+      }
 
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      setNarrationError(errors.speechSynthesisUnsupported);
-      return Promise.resolve();
-    }
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+        setNarrationError(errors.speechSynthesisUnsupported);
+        return Promise.resolve();
+      }
 
-    setNarrationError(null);
-    window.speechSynthesis.cancel();
+      setNarrationError(null);
+      window.speechSynthesis.cancel();
 
-    return new Promise<void>((resolve) => {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utteranceRef.current = utterance;
-      setIsNarrating(true);
+      return new Promise<void>((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utteranceRef.current = utterance;
+        setIsNarrating(true);
 
-      utterance.onend = () => {
-        setIsNarrating(false);
-        utteranceRef.current = null;
-        resolve();
-      };
+        utterance.onend = () => {
+          setIsNarrating(false);
+          utteranceRef.current = null;
+          resolve();
+        };
 
-      utterance.onerror = () => {
-        setIsNarrating(false);
-        setNarrationError(errors.playQuestion);
-        utteranceRef.current = null;
-        resolve();
-      };
+        utterance.onerror = () => {
+          setIsNarrating(false);
+          setNarrationError(errors.playQuestion);
+          utteranceRef.current = null;
+          resolve();
+        };
 
-      window.speechSynthesis.speak(utterance);
-    });
-  }, [errors.playQuestion, errors.speechSynthesisUnsupported]);
+        window.speechSynthesis.speak(utterance);
+      });
+    },
+    [errors.playQuestion, errors.speechSynthesisUnsupported]
+  );
 
   const endInterview = useCallback(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -328,9 +329,7 @@ export function useInterviewManager(): InterviewManagerReturn {
       setStatusMessage(status.recordingAnswer);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : errors.startRecording;
+        error instanceof Error ? error.message : errors.startRecording;
       setStatusMessage(message);
     }
   }, [
@@ -353,9 +352,7 @@ export function useInterviewManager(): InterviewManagerReturn {
         await startListening();
       } catch (error) {
         const message =
-          error instanceof Error
-            ? error.message
-            : errors.restartRecording;
+          error instanceof Error ? error.message : errors.restartRecording;
         setStatusMessage(message);
         return;
       }
@@ -405,9 +402,7 @@ export function useInterviewManager(): InterviewManagerReturn {
       setAnalysisResults(feedback);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : errors.analyzeAnswers;
+        error instanceof Error ? error.message : errors.analyzeAnswers;
       setAnalysisError(message);
       setAnalysisResults([]);
     } finally {

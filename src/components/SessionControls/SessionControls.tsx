@@ -20,6 +20,8 @@ type SessionControlsProps = {
   canStart: boolean;
   disableStart: boolean;
   showEndButton: boolean;
+  availability: string;
+  onStartDownload: () => Promise<void>;
 };
 
 const SessionControlsComponent = ({
@@ -36,6 +38,8 @@ const SessionControlsComponent = ({
   canStart,
   disableStart,
   showEndButton,
+  availability,
+  onStartDownload
 }: SessionControlsProps) => {
   const difficultyIndex = useMemo(
     () => Math.max(0, DIFFICULTY_LEVELS.indexOf(difficulty)),
@@ -45,7 +49,6 @@ const SessionControlsComponent = ({
     () => difficulty.charAt(0).toUpperCase() + difficulty.slice(1),
     [difficulty]
   );
-
   const handleDescriptionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onJobDescriptionChange(event.currentTarget.value);
   };
@@ -98,15 +101,24 @@ const SessionControlsComponent = ({
       />
 
       <div className={styles.actions}>
-        <Button
-          className={styles.actionButton}
-          variant="primary"
-          onClick={onStartInterview}
-          disabled={!canStart || disableStart}
-        >
-          {COPY.sessionControls.startInterview}
-        </Button>
-
+        {availability === "available" ? (
+          <Button
+            className={styles.actionButton}
+            variant="primary"
+            onClick={onStartInterview}
+            disabled={!canStart || disableStart}
+          >
+            {COPY.sessionControls.startInterview}
+          </Button>
+        ) : (
+          <Button
+            className={styles.actionButton}
+            variant="secondary"
+            onClick={onStartDownload}
+          >
+            {"Prepare AI Engine"}
+          </Button>
+        )}
         {showEndButton ? (
           <Button
             className={styles.actionButton}
