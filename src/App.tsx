@@ -151,6 +151,7 @@ function App() {
             });
           };
         }
+        window.location.reload();
 
         const createdWriter = await (self as any).Writer.create(baseOptions);
         setWriter(createdWriter);
