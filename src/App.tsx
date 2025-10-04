@@ -149,6 +149,7 @@ function App() {
 
             monitor.addEventListener("downloadcomplete", () => {
               updateProgress(1);
+              setAwaitingActivation(false);
               setShowDownloadOverlay(false);
             });
           };
@@ -163,6 +164,7 @@ function App() {
           }
 
           setDownloadPct(100);
+          setAwaitingActivation(false);
           downloadTimerRef.current = window.setTimeout(() => {
             setDownloadPct(null);
             setAvailability("available");
@@ -172,6 +174,7 @@ function App() {
         } else {
           setAvailability("available");
           setDownloadPct(null);
+          setAwaitingActivation(false);
           setShowDownloadOverlay(false);
         }
       } catch (err) {
