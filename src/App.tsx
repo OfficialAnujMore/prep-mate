@@ -149,6 +149,7 @@ function App() {
 
             monitor.addEventListener("downloadcomplete", () => {
               updateProgress(1);
+              setShowDownloadOverlay(false);
             });
           };
         }
