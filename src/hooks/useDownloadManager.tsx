@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { COPY } from "../constants/copy";
 
 type WriterAvailability =
   | "checking"
@@ -17,7 +18,6 @@ const useDownloadManager = () => {
       setAvailability("unavailable");
       return;
     }
-    // availability() is async—wrap in IIFE
     (async () => {
       try {
         const a = await (self as any).Writer.availability();
@@ -31,38 +31,39 @@ const useDownloadManager = () => {
     })();
   }, []);
 
+  // TODO: Import the hardcoded label and tone from a constant file
   const writerStatus = useMemo(() => {
     console.log(`Writer status ${availability}`);
     switch (availability) {
       case "available":
         return {
-          label: "AI engine ready",
+          label: COPY.downloadManager.availableLabel,
           tone: "ready" as const,
         };
       case "downloading":
         return {
-          label: `Downloading resources`,
+          label: COPY.downloadManager.downloadingLabel,
           tone: "progress" as const,
         };
       case "downloadable":
         return {
-          label: "Preparing AI engine…",
+          label: COPY.downloadManager.downloadableLabel,
           tone: "progress" as const,
         };
       case "checking":
         return {
-          label: "Checking AI engine…",
+          label: COPY.downloadManager.checkingLabel,
           tone: "progress" as const,
         };
       case "error":
         return {
-          label: "We couldn't initialise the AI engine. Refresh to try again.",
+          label: COPY.downloadManager.errorLabel,
           tone: "warn" as const,
         };
       case "unavailable":
       default:
         return {
-          label: "AI engine unavailable in this browser.",
+          label: COPY.downloadManager.defaultLabel,
           tone: "warn" as const,
         };
     }

@@ -39,7 +39,7 @@ const SessionControlsComponent = ({
   disableStart,
   showEndButton,
   availability,
-  onStartDownload
+  onStartDownload,
 }: SessionControlsProps) => {
   const difficultyIndex = useMemo(
     () => Math.max(0, DIFFICULTY_LEVELS.indexOf(difficulty)),
@@ -116,7 +116,7 @@ const SessionControlsComponent = ({
             variant="secondary"
             onClick={onStartDownload}
           >
-            {"Prepare AI Engine"}
+            {COPY.sessionControls.prepareEngine}
           </Button>
         )}
         {showEndButton ? (
