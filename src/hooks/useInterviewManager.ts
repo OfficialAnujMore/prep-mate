@@ -31,6 +31,7 @@ export function useInterviewManager(): InterviewManagerReturn {
   const startInFlightRef = useRef(false);
   const [activeLoaders, setActiveLoaders] = useState<LoaderConfig[]>([]);
   const [isInterviewActive, setIsInterviewActive] = useState(false);
+  const [autoListeningEnabled, setAutoListeningEnabled] = useState(true);
   const [generatedQuestionsList, setGeneratedQuestionsList] = useState<
     string[]
   >([]);
@@ -80,6 +81,12 @@ export function useInterviewManager(): InterviewManagerReturn {
 
   useEffect(() => {
     if (isInterviewActive) {
+      return;
+    }
+
+    if (!autoListeningEnabled) {
+      startInFlightRef.current = false;
+      stopListening();
       return;
     }
 
@@ -149,6 +156,7 @@ export function useInterviewManager(): InterviewManagerReturn {
     })();
   }, [
     errors.microphoneAccess,
+    autoListeningEnabled,
     hasCandidateName,
     hasDescription,
     hasPermission,
@@ -236,6 +244,7 @@ export function useInterviewManager(): InterviewManagerReturn {
 
     utteranceRef.current = null;
 
+    setAutoListeningEnabled(false);
     setIsInterviewActive(false);
     setInterviewComplete(false);
     setManualPause(false);
@@ -369,6 +378,13 @@ export function useInterviewManager(): InterviewManagerReturn {
   ]);
 
   useEffect(() => {
+    if (analysisResults.length > 0) {
+      setAutoListeningEnabled(false);
+      stopListening();
+    }
+  }, [analysisResults.length, stopListening]);
+
+  useEffect(() => {
     if (!isInterviewActive) {
       return;
     }
@@ -441,6 +457,8 @@ export function useInterviewManager(): InterviewManagerReturn {
     if (!writerGlobal) {
       return;
     }
+
+    setAutoListeningEnabled(true);
 
     const trimmedName = candidateName.trim();
     if (!trimmedName) {
