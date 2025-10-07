@@ -44,7 +44,9 @@ export const verifyJobDescription = async (
   const result = await writer.write(analyseJD(jobDescription));
 
   const cleaned = sanitizeWriterResponse(result);
+  console.log(cleaned);
   const parsed = JSON.parse(cleaned);
+  
 
   if (!parsed || typeof parsed.result !== "boolean") {
     throw new Error("Unexpected response shape from job description check.");
