@@ -1,28 +1,11 @@
-import { ChangeEvent, Dispatch, SetStateAction, memo, useMemo } from "react";
+import { ChangeEvent, memo, useMemo } from "react";
 import styles from "../../App.module.css";
 import { Button } from "../Button/Button";
 import { TextArea } from "../TextArea/TextArea";
-import { DIFFICULTY_LEVELS, InterviewDifficulty } from "../../types/interview";
 import { COPY } from "../../constants/copy";
 import { SessionInputControl } from "./SessionInputControl";
-
-type SessionControlsProps = {
-  candidateName: string;
-  onCandidateNameChange: Dispatch<SetStateAction<string>>;
-  questionCount: number;
-  onQuestionCountChange: Dispatch<SetStateAction<number>>;
-  difficulty: InterviewDifficulty;
-  onDifficultyChange: Dispatch<SetStateAction<InterviewDifficulty>>;
-  jobDescription: string;
-  onJobDescriptionChange: Dispatch<SetStateAction<string>>;
-  onStartInterview: () => void;
-  onEndInterview: () => void;
-  canStart: boolean;
-  disableStart: boolean;
-  showEndButton: boolean;
-  availability: string;
-  onStartDownload: () => Promise<void>;
-};
+import { DIFFICULTY_LEVELS } from "../../types";
+import type { SessionControlsProps } from "../../types";
 
 const SessionControlsComponent = ({
   candidateName,

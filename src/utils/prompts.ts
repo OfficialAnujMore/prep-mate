@@ -1,4 +1,4 @@
-import type { InterviewDifficulty } from "../types/interview";
+import type { BuildQuestionPromptArgs, InterviewDifficulty } from "../types";
 
 export const KEYWORD_PROMPT_OPTIONS = {
   sharedContext:
@@ -40,13 +40,6 @@ export const analyseJD = (jobDescription: string) =>
     'If the job description is irrelevant or lacks technical details, return {"result":false} else return {"result":true}',
     "Do not include any text outside the JSON response.",
   ].join("\n\n");
-
-type BuildQuestionPromptArgs = {
-  keywords: string[];
-  questionCount: number;
-  difficulty: InterviewDifficulty;
-  candidateName: string;
-};
 
 export const buildQuestionPrompt = ({
   keywords,

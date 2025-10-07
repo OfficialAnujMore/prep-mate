@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { COPY } from "../constants/copy";
-
-type WriterAvailability =
-  | "checking"
-  | "unavailable"
-  | "available"
-  | "downloadable"
-  | "downloading"
-  | "error";
+import type { WriterAvailability } from "../types";
 
 const useDownloadManager = () => {
   const [availability, setAvailability] =

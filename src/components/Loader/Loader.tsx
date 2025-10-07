@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./Loader.module.css";
-
-type LoaderProps = {
-  messages?: string[];
-};
+import type { LoaderProps } from "../../types";
 
 const DEFAULT_MESSAGE = "Working on it...";
 

@@ -1,12 +1,7 @@
 import { memo } from "react";
 import styles from "../../App.module.css";
-import type { InterviewAnswer } from "../../types/interview";
 import { COPY } from "../../constants/copy";
-
-type InterviewQnAListProps = {
-  entries: InterviewAnswer[];
-  show: boolean;
-};
+import type { InterviewQnAListProps } from "../../types";
 
 const InterviewQnAListComponent = ({ entries, show }: InterviewQnAListProps) => {
   if (!show || entries.length === 0) {

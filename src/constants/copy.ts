@@ -1,5 +1,6 @@
 export const COPY = {
   app: {
+    heading: "AI Interview Coach",
     title: "PrepMate",
     subtitle:
       "Practice realistic interviews powered by on-device AI coaching. Paste a job description, speak your answers, and get instant feedback.",

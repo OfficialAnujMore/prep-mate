@@ -1,11 +1,7 @@
 import { memo } from "react";
 import styles from "../../App.module.css";
-import type { AnswerFeedback } from "../../types/interview";
 import { COPY } from "../../constants/copy";
-
-type AnalysisListProps = {
-  entries: AnswerFeedback[];
-};
+import type { AnalysisListProps } from "../../types";
 
 const AnalysisListComponent = ({ entries }: AnalysisListProps) => {
   if (entries.length === 0) {

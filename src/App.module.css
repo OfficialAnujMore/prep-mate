@@ -67,7 +67,6 @@
   font-size: clamp(1.05rem, 1.8vw, 1.3rem);
   color: rgba(15, 23, 42, 0.75);
   line-height: 1.7;
-  max-width: 40ch;
 }
 
 .panel {

@@ -1,12 +1,4 @@
-import {
-  type Dispatch,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   analyzeAnswersWithWriter,
   generateInterviewQuestions,
@@ -18,51 +10,12 @@ import type {
   AnswerFeedback,
   InterviewAnswer,
   InterviewDifficulty,
-} from "../types/interview";
+  InterviewManagerReturn,
+  LoaderConfig,
+  SessionPhase,
+  WriterGlobal,
+} from "../types";
 import { useSpeechRecognition } from "./useSpeechRecognition";
-
-type SessionPhase =
-  | "request-permission"
-  | "paste-description"
-  | "starting-listener"
-  | "listening"
-  | "paused";
-
-type LoaderConfig = { id: string; messages: string[] };
-
-type InterviewManagerReturn = {
-  jobDescription: string;
-  setJobDescription: Dispatch<SetStateAction<string>>;
-  hasDescription: boolean;
-  candidateName: string;
-  setCandidateName: Dispatch<SetStateAction<string>>;
-  questionCount: number;
-  setQuestionCount: Dispatch<SetStateAction<number>>;
-  difficulty: InterviewDifficulty;
-  setDifficulty: Dispatch<SetStateAction<InterviewDifficulty>>;
-  statusMessage: string | null;
-  speechError: string | null;
-  combinedTranscript: string;
-  startInterview: () => Promise<void>;
-  activeLoaders: LoaderConfig[];
-  isInterviewActive: boolean;
-  currentQuestion: string | null;
-  currentQuestionIndex: number;
-  totalQuestions: number;
-  handlePlayQuestion: () => void;
-  handleStartAnswer: () => Promise<void>;
-  handleRestartAnswer: () => Promise<void>;
-  handleSubmitAnswer: () => void;
-  endInterview: () => void;
-  isNarrating: boolean;
-  isAnswering: boolean;
-  interviewComplete: boolean;
-  interviewQnA: InterviewAnswer[];
-  narrationError: string | null;
-  analysisResults: AnswerFeedback[];
-  analysisError: string | null;
-  isAnalyzingAnswers: boolean;
-};
 
 export function useInterviewManager(): InterviewManagerReturn {
   const copy = COPY.interviewManager;
@@ -92,9 +45,7 @@ export function useInterviewManager(): InterviewManagerReturn {
   const [isAnalyzingAnswers, setIsAnalyzingAnswers] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const sessionTokenRef = useRef(0);
-
-  // const { writerStatus, onStartDownload } = useDownloadManager();
-
+  
   const startLoader = useCallback((id: string, messages: string[]) => {
     setActiveLoaders((prev) => {
       const withoutCurrent = prev.filter((loader) => loader.id !== id);
@@ -656,6 +607,3 @@ export function useInterviewManager(): InterviewManagerReturn {
     isAnalyzingAnswers,
   };
 }
-type WriterGlobal = {
-  availability: () => Promise<"available" | "unavailable" | "requires-install">;
-};

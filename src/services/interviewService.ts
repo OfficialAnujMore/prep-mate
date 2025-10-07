@@ -10,34 +10,19 @@ import {
 } from "../utils/prompts";
 import type {
   AnswerFeedback,
+  GenerateQuestionParams,
   InterviewAnswer,
   InterviewDifficulty,
-} from "../types/interview";
+  JobDescriptionVerificationResponse,
+  KeywordResponse,
+  QuestionResponse,
+} from "../types";
 
 declare const Writer: {
   availability: () => Promise<"available" | "unavailable" | "requires-install">;
   create: (
     options: Record<string, unknown>
   ) => Promise<{ write: (prompt: string) => Promise<string> }>;
-};
-
-type KeywordResponse = {
-  keywords: string[];
-};
-
-type QuestionResponse = {
-  questions: string[];
-};
-
-type JobDescriptionVerificationResponse = {
-  result: boolean;
-};
-
-type GenerateQuestionParams = {
-  keywords: string[];
-  questionCount: number;
-  difficulty: InterviewDifficulty;
-  candidateName: string;
 };
 
 const sanitizeWriterResponse = (raw: string) =>
@@ -74,6 +59,8 @@ export const generateInterviewQuestions = async ({
   difficulty,
   candidateName,
 }: GenerateQuestionParams): Promise<QuestionResponse> => {
+  console.log({questionCount});
+  
   const writer = await Writer.create(QUESTION_PROMPT_OPTIONS);
   const result = await writer.write(
     buildQuestionPrompt({
@@ -83,6 +70,8 @@ export const generateInterviewQuestions = async ({
       candidateName,
     })
   );
+  console.log(result);
+  
   const cleaned = sanitizeWriterResponse(result);
   return JSON.parse(cleaned);
 };

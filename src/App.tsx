@@ -89,7 +89,7 @@ function App() {
     <div className={styles.app}>
       <div className={styles.shell}>
         <section className={styles.hero}>
-          <span className={styles.heroBadge}>AI Interview Coach</span>
+          <span className={styles.heroBadge}>{COPY.app.heading}</span>
           <h1 className={styles.title}>{COPY.app.title}</h1>
           <p className={styles.subtitle}>{COPY.app.subtitle}</p>
         </section>
