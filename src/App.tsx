@@ -9,7 +9,8 @@ import { TranscriptPanel } from "./components/TranscriptPanel/TranscriptPanel";
 import { InterviewQnAList } from "./components/InterviewQnAList/InterviewQnAList";
 import { AnalysisList } from "./components/AnalysisList/AnalysisList";
 import useDownloadManager from "./hooks/useDownloadManager";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { Button } from "./components/Button/Button";
 
 const WRITER_LOADER_ID = "writer-status";
 
@@ -44,6 +45,8 @@ function App() {
     narrationError,
     analysisResults,
     analysisError,
+    isAnalyzingAnswers,
+    runAnswerAnalysis,
     endInterview,
   } = useInterviewManager();
 
@@ -170,7 +173,16 @@ function App() {
               <AnalysisList entries={analysisResults} />
 
               {analysisError ? (
-                <p className={styles.analysisError}>{analysisError}</p>
+                <div className={styles.analysisErrorBlock}>
+                  <p className={styles.analysisError}>{analysisError}</p>
+                  <Button
+                    variant="secondary"
+                    onClick={runAnswerAnalysis}
+                    disabled={isAnalyzingAnswers}
+                  >
+                    {COPY.analysis.retryAnalysis}
+                  </Button>
+                </div>
               ) : null}
             </section>
           ) : null}

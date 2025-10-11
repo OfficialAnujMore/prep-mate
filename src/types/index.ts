@@ -166,6 +166,7 @@ export type InterviewManagerReturn = {
   analysisResults: AnswerFeedback[];
   analysisError: string | null;
   isAnalyzingAnswers: boolean;
+  runAnswerAnalysis: () => Promise<void>;
 };
 
 export type TranscriptPanelProps = {

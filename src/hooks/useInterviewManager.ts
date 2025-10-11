@@ -623,5 +623,6 @@ export function useInterviewManager(): InterviewManagerReturn {
     analysisResults,
     analysisError,
     isAnalyzingAnswers,
+    runAnswerAnalysis,
   };
 }

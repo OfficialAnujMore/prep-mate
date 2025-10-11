@@ -45,6 +45,7 @@ export const COPY = {
     answerLabel: "Your answer:",
     feedbackLabel: "Feedback:",
     fallbackAnswer: "No answer captured.",
+    retryAnalysis: "Retry analysis",
   },
   interviewManager: {
     status: {
