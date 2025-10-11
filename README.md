@@ -1,14 +1,39 @@
 # PrepMate
 
-PrepMate is an AI-powered interview coach that runs entirely on-device in Google Chrome desktop browser. It captures spoken responses, analyses answers with Gemini Nano, and offers targeted feedback to help candidates prepare for technical interviews.
+PrepMate is an AI-powered interview coach that runs fully on-device in Google Chrome. It guides candidates through realistic mock interviews, captures spoken responses, and uses Chrome’s built-in Gemini Nano model to deliver actionable feedback—all while keeping data on the user’s machine.
 
-Webiste URL `https://my-ai-interview-rehearsal-coach.netlify.app/`
+- **Live demo:** https://my-ai-interview-rehearsal-coach.netlify.app/
+
+## Problem & solution
+
+Interview preparation usually means expensive coaching or sharing sensitive personal information with cloud services. PrepMate keeps the process private and accessible: candidates practise in Chrome, receive instant feedback, and never send recordings to external servers.
+
+## Key features
+
+- Voice-driven mock interviews tailored to a supplied job description.
+- On-device transcription with follow-up prompts for deeper practice.
+- Automated answer analysis, summaries, and rewrite suggestions.
+- Analytics and crash reporting to understand usage patterns and issues.
+- Works entirely in the browser when device and Chrome requirements are met.
+
+## Chrome on-device AI APIs
+
+- **Prompt API** – Generates tailored interview questions and follow-up prompts with Gemini Nano.
+- **Summarizer API** – Condenses user responses into digestible feedback points.
+- **Writer & Rewriter APIs** – Produces refined answer suggestions and alternate phrasing for improvement.
+
+> These APIs currently require Google Chrome desktop versions 137–142 on Windows 10/11, macOS 13+, Linux, or Chromebook Plus devices running Platform 16389.0.0 or later.
+
+## Demo video
+
+- **Public video (YouTube/Vimeo, < 3 minutes):** `<ADD VIDEO URL BEFORE SUBMISSION>`
+  - Must show the Chrome desktop application running end-to-end.
 
 ## Prerequisites
 
 - Node.js 18.0.0 or later
-- npm 9+ (bundled with Node 18)
-- Google Chrome desktop version 137–142 on a supported operating system for on-device AI features
+- npm 9+ (ships with Node 18)
+- Google Chrome desktop v137–142 on a supported operating system
 
 ## Local development
 
@@ -17,51 +42,63 @@ Webiste URL `https://my-ai-interview-rehearsal-coach.netlify.app/`
    npm install
    ```
 2. **Configure environment variables**
-   - Duplicate `.env.sample` as `.env`.
-   - Replace the placeholder  values with your project credentials.
+   - Copy `.env.sample` to `.env`.
+   - Replace placeholder values with your Firebase project credentials and Writer API origin trial token.
 3. **Start the development server**
    ```bash
    npm run dev
    ```
-   The app is available at `http://localhost:5173`. Any code changes trigger hot module replacement.
+   The app serves at `http://localhost:5173` with hot module replacement enabled.
 
 ## Environment variables
 
-| Key                     | Description                                   |
-| ----------------------- | --------------------------------------------- |
-| `WRITER_API_TOKEN`      | Token to enable writer API.                   |
-| `FIREBASE_API_KEY`      | Firebase API key for the web app              |
-| `FIREBASE_AUTH_DOMAIN`  | Firebase Auth domain                          |
-| `FIREBASE_PROJECT_ID`   | Firebase project identifier                   |
-| `FIREBASE_APP_ID`       | Firebase app identifier                       |
-| `FIREBASE_MEASUREMENT_ID` | Firebase Analytics measurement ID (GA4)    |
+| Key                       | Description                                              |
+| ------------------------- | -------------------------------------------------------- |
+| `WRITER_API_TOKEN`        | Chrome origin-trial token enabling the Writer API        |
+| `FIREBASE_API_KEY`        | Firebase API key for the web client                      |
+| `FIREBASE_AUTH_DOMAIN`    | Firebase Auth domain                                     |
+| `FIREBASE_PROJECT_ID`     | Firebase project identifier                              |
+| `FIREBASE_APP_ID`         | Firebase app identifier                                  |
+| `FIREBASE_MEASUREMENT_ID` | Firebase Analytics (GA4) measurement ID                  |
 
-These values power Firebase Analytics and crash reporting. Analytics initialises automatically when all variables are present.
+Firebase powers usage analytics and crash logging. The Writer API token is required to access Chrome’s on-device generative APIs.
 
 ## Available scripts
 
 ```bash
 npm run dev       # Start the Vite dev server
 npm run build     # Type-check and build for production
-npm run preview   # Preview the production build locally
-npm run lint      # Lint the TypeScript sources
+npm run preview   # Serve the production build locally
+npm run lint      # Lint the TypeScript source files
 ```
 
-## Testing and validation
+## Testing & validation
 
-1. Run `npm run lint` to ensure code quality checks pass.
-2. Run `npm run build` to confirm the project type-checks and bundles successfully.
-3. Visit the running app and simulate an error (e.g., trigger `throw new Error('test')` in the console) to verify Firebase Analytics captures exceptions in the DebugView.
+1. Run `npm run lint` to ensure code style and best practices.
+2. Run `npm run build` to confirm the project type-checks and bundles correctly.
+3. Launch the dev server and trigger a sample error (e.g., `throw new Error('debug crash')` in the console) to verify Firebase Analytics logs exceptions in DebugView.
+4. Use Chrome’s `chrome://on-device-internals` page to confirm Gemini Nano resources are downloaded on supported hardware.
 
 ## Deployment
 
-1. Build the production bundle:
+1. Generate a production build:
    ```bash
    npm run build
    ```
-2. Deploy the contents of the `dist/` directory to your hosting provider (e.g., Vercel, Netlify, GitHub Pages). Ensure the production environment sets the same Firebase variables used locally.
-3. Provide the live URL alongside this repository when submitting for judging. If access restrictions apply, include valid credentials in your submission.
+2. Deploy the `dist/` directory to your hosting provider (Netlify, Vercel, GitHub Pages, etc.).
+3. Ensure production environment variables mirror your local `.env`.
+4. Share the live URL (see above). If access is restricted, include working credentials in your submission instructions.
+
+## Submission checklist (contest requirements)
+
+- ✅ **Application** – Web app built for Chrome that uses on-device AI APIs (Prompt, Summarizer, Writer/Rewriter).  
+- ✅ **Description** – This README documents the problem, features, and API usage.  
+- ⬜ **Demo video** – Add a public YouTube/Vimeo link under “Demo video” before submitting.  
+- ✅ **Open-source repo** – Public GitHub repository with an [MIT License](./LICENSE) and full setup/testing instructions.  
+- ✅ **Live access** – Provide the production URL above; include credentials if you enforce authentication.  
+- ✅ **Language** – Keep written materials and the video narration in English.  
+- ⬜ **Optional feedback** – Complete the official feedback form after submission to qualify for the “Most Valuable Feedback” prize.
 
 ## License
 
-This project is licensed under the [MIT License](./LICENSE).
+PrepMate is released under the [MIT License](./LICENSE).
