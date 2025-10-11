@@ -34,26 +34,11 @@ export const ANSWER_ANALYSIS_PROMPT_OPTIONS = {
 
 export const buildKeywordPrompt = (jobDescription: string) =>
   [
-    "You are an advanced ATS (Applicant Tracking System) keyword extraction engine specialized in technical job descriptions.",
-    "",
-    "Your task is to carefully analyze the following job description and extract only **technical keywords** that would be useful for generating interview questions.",
-    "",
+    "Following is the job description",
     "Job Description:",
     jobDescription.trim(),
-    "",
-    "Extraction Guidelines:",
-    "1. Include programming languages, frameworks, libraries, tools, databases, cloud platforms, and technical methodologies (e.g., React, Node.js, AWS, Docker, SQL, Agile).",
-    "2. Exclude soft skills, job titles, company names, and non-technical phrases (e.g., 'communication', 'leadership', 'team player').",
-    "3. Return the keywords as unique items, without duplicates.",
-    "4. If the description is irrelevant or lacks technical details, return an empty list.",
-    "",
-    "Output Format (strict):",
-    "Return ONLY valid JSON following this exact schema:",
-    '{"keywords": ["Keyword1", "Keyword2", "Keyword3", ...]}',
-    "",
-    'If no valid technical keywords are found, return {"keywords": []}.',
-    "",
-    "Do not include any text, explanations, or formatting outside the JSON response.",
+    'If the job description is irrelevant or lacks technical details, return {"result":false} else return {"result":true}',
+    "Do not include any text outside the JSON response.",
   ].join("\n");
 
 export const analyseJD = (jobDescription: string) =>

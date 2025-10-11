@@ -81,6 +81,7 @@ const SessionControlsComponent = ({
         value={jobDescription}
         onChange={handleDescriptionChange}
         helperText={COPY.sessionControls.jobDescriptionHelper}
+        disabled={disableStart}
       />
 
       <div className={styles.actions}>
