@@ -1,8 +1,9 @@
 import type { BuildQuestionPromptArgs, InterviewDifficulty } from "../types";
 
+
 export const KEYWORD_PROMPT_OPTIONS = {
   sharedContext:
-    "Act as an advanced ATS (Applicant Tracking System) specialized in analyzing job descriptions and extracting relevant technical keywords.",
+    "Act as an ATS scanner to extract keywords from the job description",
   tone: "formal",
   format: "plain-text",
   length: "long",
@@ -10,20 +11,18 @@ export const KEYWORD_PROMPT_OPTIONS = {
 
 export const QUESTION_PROMPT_OPTIONS = {
   sharedContext:
-    "Act as an experienced technical interviewer who creates realistic and conversational interview questions based on provided keywords.",
+    "Act as an real life interviewer and generate a interview question",
   tone: "formal",
   format: "plain-text",
   length: "long",
 };
 
 export const JOB_DESCRIPTION_PROMPT_OPTIONS = {
-  sharedContext:
-    "Act as a technical recruiter verifying whether a job description is relevant, detailed, and technically sound.",
+  sharedContext: "Verify relevant job description",
   tone: "formal",
   format: "plain-text",
   length: "long",
 };
-
 export const ANSWER_ANALYSIS_PROMPT_OPTIONS = {
   sharedContext:
     "Act as an expert interview coach who critically analyzes candidate answers, identifying gaps, strengths, and specific areas for improvement.",
@@ -34,33 +33,22 @@ export const ANSWER_ANALYSIS_PROMPT_OPTIONS = {
 
 export const buildKeywordPrompt = (jobDescription: string) =>
   [
-    "Following is the job description",
-    "Job Description:",
+    "Act as an ATS scanner and read the following job description.",
     jobDescription.trim(),
-    'If the job description is irrelevant or lacks technical details, return {"result":false} else return {"result":true}',
+    "Extract only the technical keywords that would inform generating interview questions.",
+    'Return ONLY valid JSON with this schema: {"keywords":["Keyword1","Keyword2",...]}.',
+    'If the description is irrelevant or lacks technical details, return {"keywords":[]}.',
     "Do not include any text outside the JSON response.",
-  ].join("\n");
+  ].join("\n\n");
 
 export const analyseJD = (jobDescription: string) =>
   [
-    "You are an expert technical recruiter and software engineer specializing in analyzing job descriptions.",
-    "Your task is to determine whether the following job description is relevant and technically detailed.",
-    "",
-    "Job Description:",
+    "Following is the job description",
     jobDescription.trim(),
-    "",
-    "Evaluation Criteria:",
-    "1. The job description must clearly specify technical skills, tools, or programming languages.",
-    "2. It must describe responsibilities or requirements related to software development, engineering, or technology.",
-    "3. If it is too vague, non-technical, or unrelated to technology, it should be considered irrelevant.",
-    "",
-    "Output Instruction:",
-    "Return ONLY a valid JSON object in the following format:",
-    '{"result": true} — if the job description is relevant and technically detailed.',
-    '{"result": false} — if it is irrelevant or lacks technical details.',
-    "",
-    "Do not include any explanations, comments, or text outside the JSON object.",
-  ].join("\n");
+    'If the job description is irrelevant or lacks technical details, return {"result":false} else return {"result":true}',
+    "Do not include any text outside the JSON response.",
+  ].join("\n\n");
+
 
 export const buildQuestionPrompt = ({
   keywords,
