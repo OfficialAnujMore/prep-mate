@@ -11,6 +11,7 @@ import { AnalysisList } from "./components/AnalysisList/AnalysisList";
 import useDownloadManager from "./hooks/useDownloadManager";
 import { useMemo, useState } from "react";
 import { Button } from "./components/Button/Button";
+import { Footer } from "./components/Footer/Footer";
 
 const WRITER_LOADER_ID = "writer-status";
 
@@ -187,6 +188,7 @@ function App() {
             </section>
           ) : null}
         </div>
+        <Footer />
       </div>
     </div>
   );

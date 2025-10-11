@@ -1,0 +1,34 @@
+.footer {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 0;
+}
+
+.text {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  color: rgba(15, 23, 42, 0.72);
+  text-align: center;
+  flex-wrap: wrap;
+}
+
+.heart {
+  color: #ef4444;
+}
+
+.link {
+  color: #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.link:hover,
+.link:focus-visible {
+  color: #312e81;
+  text-decoration: underline;
+  outline: none;
+}
