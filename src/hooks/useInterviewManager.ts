@@ -1,12 +1,4 @@
-import {
-  type Dispatch,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   analyzeAnswersWithWriter,
   generateInterviewQuestions,
@@ -18,68 +10,28 @@ import type {
   AnswerFeedback,
   InterviewAnswer,
   InterviewDifficulty,
-} from "../types/interview";
+  InterviewManagerReturn,
+  LoaderConfig,
+  SessionPhase,
+  WriterGlobal,
+} from "../types";
 import { useSpeechRecognition } from "./useSpeechRecognition";
-
-type SessionPhase =
-  | "request-permission"
-  | "paste-description"
-  | "starting-listener"
-  | "listening"
-  | "paused";
-
-type LoaderConfig = { id: string; messages: string[] };
-
-type InterviewManagerReturn = {
-  jobDescription: string;
-  setJobDescription: Dispatch<SetStateAction<string>>;
-  hasDescription: boolean;
-  candidateName: string;
-  setCandidateName: Dispatch<SetStateAction<string>>;
-  questionCount: number;
-  setQuestionCount: Dispatch<SetStateAction<number>>;
-  difficulty: InterviewDifficulty;
-  setDifficulty: Dispatch<SetStateAction<InterviewDifficulty>>;
-  statusMessage: string | null;
-  speechError: string | null;
-  combinedTranscript: string;
-  startInterview: () => Promise<void>;
-  activeLoaders: LoaderConfig[];
-  isInterviewActive: boolean;
-  currentQuestion: string | null;
-  currentQuestionIndex: number;
-  totalQuestions: number;
-  handlePlayQuestion: () => void;
-  handleStartAnswer: () => Promise<void>;
-  handleRestartAnswer: () => Promise<void>;
-  handleSubmitAnswer: () => void;
-  endInterview: () => void;
-  isNarrating: boolean;
-  isAnswering: boolean;
-  interviewComplete: boolean;
-  interviewQnA: InterviewAnswer[];
-  narrationError: string | null;
-  analysisResults: AnswerFeedback[];
-  analysisError: string | null;
-  isAnalyzingAnswers: boolean;
-};
 
 export function useInterviewManager(): InterviewManagerReturn {
   const copy = COPY.interviewManager;
   const { status, errors, loaders, logs } = copy;
 
-  const [jobDescription, setJobDescription] = useState("");
   const [candidateName, setCandidateName] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
   const [questionCount, setQuestionCount] = useState(5);
   const [difficulty, setDifficulty] = useState<InterviewDifficulty>("medium");
   const [phase, setPhase] = useState<SessionPhase>("request-permission");
-  const [statusMessage, setStatusMessage] = useState<string | null>(
-    status.allowMic
-  );
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [manualPause, setManualPause] = useState(false);
   const startInFlightRef = useRef(false);
   const [activeLoaders, setActiveLoaders] = useState<LoaderConfig[]>([]);
   const [isInterviewActive, setIsInterviewActive] = useState(false);
+  const [autoListeningEnabled, setAutoListeningEnabled] = useState(true);
   const [generatedQuestionsList, setGeneratedQuestionsList] = useState<
     string[]
   >([]);
@@ -94,7 +46,7 @@ export function useInterviewManager(): InterviewManagerReturn {
   const [isAnalyzingAnswers, setIsAnalyzingAnswers] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const sessionTokenRef = useRef(0);
-
+  
   const startLoader = useCallback((id: string, messages: string[]) => {
     setActiveLoaders((prev) => {
       const withoutCurrent = prev.filter((loader) => loader.id !== id);
@@ -129,6 +81,12 @@ export function useInterviewManager(): InterviewManagerReturn {
 
   useEffect(() => {
     if (isInterviewActive) {
+      return;
+    }
+
+    if (!autoListeningEnabled) {
+      startInFlightRef.current = false;
+      stopListening();
       return;
     }
 
@@ -188,9 +146,7 @@ export function useInterviewManager(): InterviewManagerReturn {
         setStatusMessage(status.listening);
       } catch (error) {
         const message =
-          error instanceof Error
-            ? error.message
-            : errors.microphoneAccess;
+          error instanceof Error ? error.message : errors.microphoneAccess;
         setStatusMessage(message);
         setManualPause(true);
         setPhase("paused");
@@ -200,6 +156,7 @@ export function useInterviewManager(): InterviewManagerReturn {
     })();
   }, [
     errors.microphoneAccess,
+    autoListeningEnabled,
     hasCandidateName,
     hasDescription,
     hasPermission,
@@ -239,40 +196,43 @@ export function useInterviewManager(): InterviewManagerReturn {
     return generatedQuestionsList[currentQuestionIndex];
   }, [currentQuestionIndex, generatedQuestionsList]);
 
-  const speakQuestion = useCallback((text: string) => {
-    if (!text) {
-      return Promise.resolve();
-    }
+  const speakQuestion = useCallback(
+    (text: string) => {
+      if (!text) {
+        return Promise.resolve();
+      }
 
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      setNarrationError(errors.speechSynthesisUnsupported);
-      return Promise.resolve();
-    }
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+        setNarrationError(errors.speechSynthesisUnsupported);
+        return Promise.resolve();
+      }
 
-    setNarrationError(null);
-    window.speechSynthesis.cancel();
+      setNarrationError(null);
+      window.speechSynthesis.cancel();
 
-    return new Promise<void>((resolve) => {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utteranceRef.current = utterance;
-      setIsNarrating(true);
+      return new Promise<void>((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utteranceRef.current = utterance;
+        setIsNarrating(true);
 
-      utterance.onend = () => {
-        setIsNarrating(false);
-        utteranceRef.current = null;
-        resolve();
-      };
+        utterance.onend = () => {
+          setIsNarrating(false);
+          utteranceRef.current = null;
+          resolve();
+        };
 
-      utterance.onerror = () => {
-        setIsNarrating(false);
-        setNarrationError(errors.playQuestion);
-        utteranceRef.current = null;
-        resolve();
-      };
+        utterance.onerror = () => {
+          setIsNarrating(false);
+          setNarrationError(errors.playQuestion);
+          utteranceRef.current = null;
+          resolve();
+        };
 
-      window.speechSynthesis.speak(utterance);
-    });
-  }, [errors.playQuestion, errors.speechSynthesisUnsupported]);
+        window.speechSynthesis.speak(utterance);
+      });
+    },
+    [errors.playQuestion, errors.speechSynthesisUnsupported]
+  );
 
   const endInterview = useCallback(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -284,6 +244,7 @@ export function useInterviewManager(): InterviewManagerReturn {
 
     utteranceRef.current = null;
 
+    setAutoListeningEnabled(false);
     setIsInterviewActive(false);
     setInterviewComplete(false);
     setManualPause(false);
@@ -328,9 +289,7 @@ export function useInterviewManager(): InterviewManagerReturn {
       setStatusMessage(status.recordingAnswer);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : errors.startRecording;
+        error instanceof Error ? error.message : errors.startRecording;
       setStatusMessage(message);
     }
   }, [
@@ -353,9 +312,7 @@ export function useInterviewManager(): InterviewManagerReturn {
         await startListening();
       } catch (error) {
         const message =
-          error instanceof Error
-            ? error.message
-            : errors.restartRecording;
+          error instanceof Error ? error.message : errors.restartRecording;
         setStatusMessage(message);
         return;
       }
@@ -405,9 +362,7 @@ export function useInterviewManager(): InterviewManagerReturn {
       setAnalysisResults(feedback);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : errors.analyzeAnswers;
+        error instanceof Error ? error.message : errors.analyzeAnswers;
       setAnalysisError(message);
       setAnalysisResults([]);
     } finally {
@@ -421,6 +376,13 @@ export function useInterviewManager(): InterviewManagerReturn {
     startLoader,
     stopLoader,
   ]);
+
+  useEffect(() => {
+    if (analysisResults.length > 0) {
+      setAutoListeningEnabled(false);
+      stopListening();
+    }
+  }, [analysisResults.length, stopListening]);
 
   useEffect(() => {
     if (!isInterviewActive) {
@@ -495,6 +457,8 @@ export function useInterviewManager(): InterviewManagerReturn {
     if (!writerGlobal) {
       return;
     }
+
+    setAutoListeningEnabled(true);
 
     const trimmedName = candidateName.trim();
     if (!trimmedName) {
@@ -659,8 +623,6 @@ export function useInterviewManager(): InterviewManagerReturn {
     analysisResults,
     analysisError,
     isAnalyzingAnswers,
+    runAnswerAnalysis,
   };
 }
-type WriterGlobal = {
-  availability: () => Promise<"available" | "unavailable" | "requires-install">;
-};

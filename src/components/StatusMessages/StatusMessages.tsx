@@ -1,10 +1,6 @@
 import { memo } from "react";
 import styles from "../../App.module.css";
-
-type StatusMessagesProps = {
-  statusMessage: string | null;
-  speechError: string | null;
-};
+import type { StatusMessagesProps } from "../../types";
 
 const StatusMessagesComponent = ({
   statusMessage,

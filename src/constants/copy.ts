@@ -1,8 +1,9 @@
 export const COPY = {
   app: {
+    heading: "AI Interview Coach",
     title: "PrepMate",
     subtitle:
-      "Practice realistic interviews powered by on-device AI coaching. Paste a role description, speak your answers, and get instant feedback.",
+      "Practice realistic interviews powered by on-device AI coaching. Paste a job description, speak your answers, and get instant feedback.",
   },
   sessionControls: {
     nameLabel: "Your name",
@@ -15,6 +16,7 @@ export const COPY = {
     jobDescriptionHelper: "Your text stays on this device—nothing gets stored.",
     startInterview: "Start interview",
     endInterview: "End interview",
+    prepareEngine: "Prepare AI Engine",
   },
   activeInterview: {
     question: "Questions",
@@ -29,7 +31,7 @@ export const COPY = {
   },
   transcript: {
     title: "Captured transcript",
-    hint: "This transcription is ready to send to Gemini Nano for deep-dive analysis.",
+    hint: "This transcription is ready to send to Gemini Nano for analysis and feedback.",
   },
   qna: {
     title: "Interview Q&A",
@@ -43,6 +45,7 @@ export const COPY = {
     answerLabel: "Your answer:",
     feedbackLabel: "Feedback:",
     fallbackAnswer: "No answer captured.",
+    retryAnalysis: "Retry analysis",
   },
   interviewManager: {
     status: {
@@ -51,7 +54,8 @@ export const COPY = {
       nameRequired: "Add your name to personalise your interview.",
       descriptionRequired: "Paste the job description to start voice capture.",
       paused: "Voice capture paused. Resume when you are ready.",
-      listening: "Listening — your answers will be transcribed for Gemini Nano.",
+      listening:
+        "Listening — your answers will be transcribed for Gemini Nano.",
       preparingMic: "Preparing microphone...",
       interviewEnded: "Interview ended. Start again when you're ready.",
       recordingAnswer: "Recording your answer...",
@@ -64,14 +68,16 @@ export const COPY = {
     },
     errors: {
       microphoneAccess: "Unable to access your microphone right now.",
-      speechSynthesisUnsupported: "Speech synthesis is not supported in this browser.",
+      speechSynthesisUnsupported:
+        "Speech synthesis is not supported in this browser.",
       playQuestion: "Unable to play the question audio.",
       startRecording: "Unable to start recording your answer.",
       restartRecording: "Unable to restart recording.",
       analyzeAnswers: "Unable to analyse your answers right now.",
       keywordsUnavailable: "Unable to generate keywords right now.",
       questionsUnavailable: "Unable to generate interview questions right now.",
-      jobDescriptionInvalid: "We couldn't recognise that job description. Try another one.",
+      jobDescriptionInvalid:
+        "We couldn't recognise that job description. Try another one.",
       noKeywordsFound: "No keywords found. Please refine the job description.",
       noQuestionsReturned: "No questions were returned. Try again later.",
     },
@@ -101,5 +107,14 @@ export const COPY = {
     logs: {
       noKeywordsReturned: "No keywords returned; skipping question generation.",
     },
+  },
+  downloadManager: {
+    defaultLabel:
+      "Oops! The AI engine isn’t supported in your current browser. Please switch to Google Chrome on desktop (version 137–142) and verify your version before continuing.",
+    availableLabel: "AI engine ready",
+    downloadingLabel: "Downloading resources",
+    downloadableLabel: "Preparing AI engine…",
+    checkingLabel: "Checking AI engine…",
+    errorLabel: "We couldn't initialise the AI engine. Refresh to try again.",
   },
 };

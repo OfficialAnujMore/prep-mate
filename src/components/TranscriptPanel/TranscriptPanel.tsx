@@ -1,10 +1,7 @@
 import { memo } from "react";
 import styles from "../../App.module.css";
 import { COPY } from "../../constants/copy";
-
-type TranscriptPanelProps = {
-  transcript: string;
-};
+import type { TranscriptPanelProps } from "../../types";
 
 const TranscriptPanelComponent = ({ transcript }: TranscriptPanelProps) => {
   if (!transcript) {

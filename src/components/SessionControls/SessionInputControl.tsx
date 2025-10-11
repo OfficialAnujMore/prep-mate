@@ -1,29 +1,6 @@
-import { ChangeEvent, ReactNode, memo } from "react";
+import { ChangeEvent, memo } from "react";
 import styles from "../../App.module.css";
-
-type BaseProps = {
-  id: string;
-  label: string;
-};
-
-type TextInputProps = BaseProps & {
-  type: "text";
-  value: string;
-  placeholder?: string;
-  onChange: (value: string) => void;
-};
-
-type RangeInputProps = BaseProps & {
-  type: "range";
-  value: number;
-  min: number;
-  max: number;
-  step?: number;
-  onChange: (value: number) => void;
-  valueDisplay?: ReactNode;
-};
-
-type SessionInputControlProps = TextInputProps | RangeInputProps;
+import type { SessionInputControlProps } from "../../types";
 
 const SessionInputControlComponent = (props: SessionInputControlProps) => {
   if (props.type === "text") {

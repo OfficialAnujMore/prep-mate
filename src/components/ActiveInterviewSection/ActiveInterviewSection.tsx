@@ -2,22 +2,7 @@ import { memo } from "react";
 import styles from "../../App.module.css";
 import { Button } from "../Button/Button";
 import { COPY } from "../../constants/copy";
-
-type ActiveInterviewSectionProps = {
-  isInterviewActive: boolean;
-  currentQuestion: string | null;
-  currentQuestionIndex: number;
-  totalQuestions: number;
-  narrationError: string | null;
-  isNarrating: boolean;
-  isAnswering: boolean;
-  interviewComplete: boolean;
-  combinedTranscript: string;
-  onPlayQuestion: () => void;
-  onStartAnswer: () => void | Promise<void>;
-  onRestartAnswer: () => void | Promise<void>;
-  onSubmitAnswer: () => void;
-};
+import type { ActiveInterviewSectionProps } from "../../types";
 
 const ActiveInterviewSectionComponent = ({
   isInterviewActive,

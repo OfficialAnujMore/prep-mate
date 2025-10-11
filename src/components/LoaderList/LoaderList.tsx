@@ -1,15 +1,7 @@
 import { memo } from "react";
 import styles from "../../App.module.css";
 import { Loader } from "../Loader/Loader";
-
-type LoaderConfig = {
-  id: string;
-  messages: string[];
-};
-
-type LoaderListProps = {
-  loaders: LoaderConfig[];
-};
+import type { LoaderListProps } from "../../types";
 
 const LoaderListComponent = ({ loaders }: LoaderListProps) => {
   if (loaders.length === 0) {

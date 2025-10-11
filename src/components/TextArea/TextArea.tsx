@@ -1,12 +1,5 @@
-import type { TextareaHTMLAttributes } from 'react';
 import styles from './TextArea.module.css';
-
-type TextAreaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
-  label?: string;
-  helperText?: string;
-  error?: boolean;
-  wrapperClassName?: string;
-};
+import type { TextAreaProps } from '../../types';
 
 export function TextArea({
   label,
