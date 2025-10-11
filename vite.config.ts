@@ -4,5 +4,5 @@ import react from '@vitejs/plugin-react';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  envPrefix: ['WRITER_', 'VITE_'],
+  envPrefix: ['WRITER_', 'VITE_', 'FIREBASE_'],
 });
