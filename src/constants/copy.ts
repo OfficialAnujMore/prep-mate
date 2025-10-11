@@ -31,7 +31,7 @@ export const COPY = {
   },
   transcript: {
     title: "Captured transcript",
-    hint: "This transcription is ready to send to Gemini Nano for analysis and feedback.",
+    hint: "This transcription is ready for analysis and feedback.",
   },
   qna: {
     title: "Interview Q&A",
@@ -55,7 +55,7 @@ export const COPY = {
       descriptionRequired: "Paste the job description to start voice capture.",
       paused: "Voice capture paused. Resume when you are ready.",
       listening:
-        "Listening — your answers will be transcribed for Gemini Nano.",
+        "Listening — your answers will be transcribed for the AI engine",
       preparingMic: "Preparing microphone...",
       interviewEnded: "Interview ended. Start again when you're ready.",
       recordingAnswer: "Recording your answer...",
@@ -110,7 +110,7 @@ export const COPY = {
   },
   downloadManager: {
     defaultLabel:
-      "Oops! The AI engine isn’t supported in your current browser. Please switch to Google Chrome on desktop (version 137–142) and verify your version before continuing.",
+      "As PrepMate executes all AI processing locally on device, please use Google Chrome desktop version 137–142 on Windows 10 or 11, macOS 13 or later, Linux, or Chromebook Plus (Platform 16389.0.0 or later) with at least 22 GB of free storage, 16 GB of RAM, four CPU cores, more than 4 GB of VRAM, and an unmetered network connection. Mobile browsers are not currently supported.",
     availableLabel: "AI engine ready",
     downloadingLabel: "Downloading resources",
     downloadableLabel: "Preparing AI engine…",
