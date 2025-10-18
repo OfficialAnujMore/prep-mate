@@ -54,7 +54,7 @@ const SessionControlsComponent = ({
         id="question-count"
         label={COPY.sessionControls.questionLabel}
         value={questionCount}
-        min={5}
+        min={1}
         max={15}
         step={1}
         onChange={(value) => onQuestionCountChange(value)}
