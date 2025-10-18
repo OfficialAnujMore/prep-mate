@@ -23,7 +23,7 @@ export function useInterviewManager(): InterviewManagerReturn {
 
   const [candidateName, setCandidateName] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [questionCount, setQuestionCount] = useState(5);
+  const [questionCount, setQuestionCount] = useState(1);
   const [difficulty, setDifficulty] = useState<InterviewDifficulty>("medium");
   const [phase, setPhase] = useState<SessionPhase>("request-permission");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
