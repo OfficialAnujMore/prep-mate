@@ -166,13 +166,6 @@ function App() {
 
               <TranscriptPanel transcript={combinedTranscript} />
 
-              <InterviewQnAList
-                entries={interviewQnA}
-                show={analysisResults.length === 0}
-              />
-
-              <AnalysisList entries={analysisResults} />
-
               {analysisError ? (
                 <div className={styles.analysisErrorBlock}>
                   <Button
@@ -184,6 +177,13 @@ function App() {
                   </Button>
                 </div>
               ) : null}
+
+              <InterviewQnAList
+                entries={interviewQnA}
+                show={analysisResults.length === 0}
+              />
+
+              <AnalysisList entries={analysisResults} />
             </section>
           ) : null}
         </div>
