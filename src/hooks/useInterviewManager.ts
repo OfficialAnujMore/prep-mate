@@ -23,7 +23,7 @@ export function useInterviewManager(): InterviewManagerReturn {
 
   const [candidateName, setCandidateName] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [questionCount, setQuestionCount] = useState(5);
+  const [questionCount, setQuestionCount] = useState(1);
   const [difficulty, setDifficulty] = useState<InterviewDifficulty>("medium");
   const [phase, setPhase] = useState<SessionPhase>("request-permission");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -256,7 +256,6 @@ export function useInterviewManager(): InterviewManagerReturn {
     setGeneratedQuestionsList([]);
     setCurrentQuestionIndex(0);
     setInterviewQnA([]);
-    setAnalysisResults([]);
     setAnalysisError(null);
     setIsAnalyzingAnswers(false);
     setActiveLoaders([]);
@@ -376,6 +375,12 @@ export function useInterviewManager(): InterviewManagerReturn {
     startLoader,
     stopLoader,
   ]);
+
+  const resetAnalysisResults = useCallback(() => {
+    setAnalysisResults([]);
+    setAnalysisError(null);
+    setIsAnalyzingAnswers(false);
+  }, []);
 
   useEffect(() => {
     if (analysisResults.length > 0) {
@@ -624,5 +629,6 @@ export function useInterviewManager(): InterviewManagerReturn {
     analysisError,
     isAnalyzingAnswers,
     runAnswerAnalysis,
+    resetAnalysisResults,
   };
 }

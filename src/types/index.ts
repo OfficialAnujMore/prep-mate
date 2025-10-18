@@ -167,6 +167,7 @@ export type InterviewManagerReturn = {
   analysisError: string | null;
   isAnalyzingAnswers: boolean;
   runAnswerAnalysis: () => Promise<void>;
+  resetAnalysisResults: () => void;
 };
 
 export type TranscriptPanelProps = {
@@ -213,6 +214,8 @@ export type SessionControlsProps = {
   showEndButton: boolean;
   availability: WriterAvailability;
   onStartDownload: () => Promise<void>;
+  canResetFeedback: boolean;
+  onResetFeedback: () => void;
 };
 
 export type StatusMessagesProps = {

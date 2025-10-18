@@ -17,6 +17,7 @@ export const COPY = {
     startInterview: "Start interview",
     endInterview: "End interview",
     prepareEngine: "Prepare AI Engine",
+    resetFeedback: "Reset feedback",
   },
   activeInterview: {
     question: "Questions",

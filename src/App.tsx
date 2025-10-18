@@ -48,6 +48,7 @@ function App() {
     analysisError,
     isAnalyzingAnswers,
     runAnswerAnalysis,
+    resetAnalysisResults,
     endInterview,
   } = useInterviewManager();
 
@@ -139,6 +140,8 @@ function App() {
                 showEndButton={hasActiveSession}
                 availability={availability}
                 onStartDownload={startAIEngineDownload}
+                canResetFeedback={analysisResults.length > 0}
+                onResetFeedback={resetAnalysisResults}
               />
 
               <ActiveInterviewSection
@@ -166,13 +169,6 @@ function App() {
 
               <TranscriptPanel transcript={combinedTranscript} />
 
-              <InterviewQnAList
-                entries={interviewQnA}
-                show={analysisResults.length === 0}
-              />
-
-              <AnalysisList entries={analysisResults} />
-
               {analysisError ? (
                 <div className={styles.analysisErrorBlock}>
                   <p className={styles.analysisError}>{analysisError}</p>
@@ -185,6 +181,13 @@ function App() {
                   </Button>
                 </div>
               ) : null}
+
+              <InterviewQnAList
+                entries={interviewQnA}
+                show={analysisResults.length === 0}
+              />
+
+              <AnalysisList entries={analysisResults} />
             </section>
           ) : null}
         </div>
