@@ -48,6 +48,7 @@ function App() {
     analysisError,
     isAnalyzingAnswers,
     runAnswerAnalysis,
+    resetAnalysisResults,
     endInterview,
   } = useInterviewManager();
 
@@ -139,6 +140,8 @@ function App() {
                 showEndButton={hasActiveSession}
                 availability={availability}
                 onStartDownload={startAIEngineDownload}
+                canResetFeedback={analysisResults.length > 0}
+                onResetFeedback={resetAnalysisResults}
               />
 
               <ActiveInterviewSection
@@ -168,6 +171,7 @@ function App() {
 
               {analysisError ? (
                 <div className={styles.analysisErrorBlock}>
+                  <p className={styles.analysisError}>{analysisError}</p>
                   <Button
                     variant="secondary"
                     onClick={runAnswerAnalysis}

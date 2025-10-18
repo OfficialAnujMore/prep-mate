@@ -23,6 +23,8 @@ const SessionControlsComponent = ({
   showEndButton,
   availability,
   onStartDownload,
+  canResetFeedback,
+  onResetFeedback,
 }: SessionControlsProps) => {
   const difficultyIndex = useMemo(
     () => Math.max(0, DIFFICULTY_LEVELS.indexOf(difficulty)),
@@ -52,7 +54,7 @@ const SessionControlsComponent = ({
         id="question-count"
         label={COPY.sessionControls.questionLabel}
         value={questionCount}
-        min={1}
+        min={5}
         max={15}
         step={1}
         onChange={(value) => onQuestionCountChange(value)}
@@ -104,13 +106,24 @@ const SessionControlsComponent = ({
           </Button>
         )}
         {showEndButton ? (
-          <Button
-            className={styles.actionButton}
-            variant="secondary"
-            onClick={onEndInterview}
-          >
-            {COPY.sessionControls.endInterview}
-          </Button>
+          <>
+            <Button
+              className={styles.actionButton}
+              variant="secondary"
+              onClick={onEndInterview}
+            >
+              {COPY.sessionControls.endInterview}
+            </Button>
+            {canResetFeedback ? (
+              <Button
+                className={styles.actionButton}
+                variant="secondary"
+                onClick={onResetFeedback}
+              >
+                {COPY.sessionControls.resetFeedback}
+              </Button>
+            ) : null}
+          </>
         ) : null}
       </div>
     </>

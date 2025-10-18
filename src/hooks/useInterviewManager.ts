@@ -376,6 +376,12 @@ export function useInterviewManager(): InterviewManagerReturn {
     stopLoader,
   ]);
 
+  const resetAnalysisResults = useCallback(() => {
+    setAnalysisResults([]);
+    setAnalysisError(null);
+    setIsAnalyzingAnswers(false);
+  }, []);
+
   useEffect(() => {
     if (analysisResults.length > 0) {
       setAutoListeningEnabled(false);
@@ -623,5 +629,6 @@ export function useInterviewManager(): InterviewManagerReturn {
     analysisError,
     isAnalyzingAnswers,
     runAnswerAnalysis,
+    resetAnalysisResults,
   };
 }
