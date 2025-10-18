@@ -64,6 +64,8 @@ export const buildQuestionPrompt = ({
       : difficulty === "hard"
       ? "challenging, senior-level"
       : "balanced, mid-level";
+  const introGreeting = targetName ? `Hi ${targetName}` : "Hi there";
+  const introQuestion = `${introGreeting}, could you please walk me through your background?`;
 
   return [
     "You are an expert technical interviewer.",
@@ -83,7 +85,7 @@ export const buildQuestionPrompt = ({
     "6) If no meaningful technical keywords are present, return an empty list (no generic questions).",
     "",
     "Ordering Rules:",
-    `- Q1: a brief self-introduction icebreaker addressing ${addressedName} by name if provided (e.g., “To start, could you introduce yourself?”).`,
+    `- Q1 MUST be exactly: "${introQuestion}".`,
     "- Q2..Q(n-1): cover the provided keywords (mix fundamentals, applied problem-solving, design, trade-offs).",
     "- Qn: ask motivation/fit for the role (e.g., “Why do you think you’re a strong fit for this role?”).",
     "",

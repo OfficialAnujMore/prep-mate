@@ -256,7 +256,6 @@ export function useInterviewManager(): InterviewManagerReturn {
     setGeneratedQuestionsList([]);
     setCurrentQuestionIndex(0);
     setInterviewQnA([]);
-    setAnalysisResults([]);
     setAnalysisError(null);
     setIsAnalyzingAnswers(false);
     setActiveLoaders([]);

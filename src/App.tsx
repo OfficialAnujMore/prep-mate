@@ -175,7 +175,6 @@ function App() {
 
               {analysisError ? (
                 <div className={styles.analysisErrorBlock}>
-                  <p className={styles.analysisError}>{analysisError}</p>
                   <Button
                     variant="secondary"
                     onClick={runAnswerAnalysis}
