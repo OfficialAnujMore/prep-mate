@@ -31,7 +31,7 @@ export function useInterviewManager(): InterviewManagerReturn {
   const startInFlightRef = useRef(false);
   const [activeLoaders, setActiveLoaders] = useState<LoaderConfig[]>([]);
   const [isInterviewActive, setIsInterviewActive] = useState(false);
-  const [autoListeningEnabled, setAutoListeningEnabled] = useState(true);
+  const [autoListeningEnabled, setAutoListeningEnabled] = useState(false);
   const [generatedQuestionsList, setGeneratedQuestionsList] = useState<
     string[]
   >([]);
@@ -84,16 +84,11 @@ export function useInterviewManager(): InterviewManagerReturn {
       return;
     }
 
-    if (!autoListeningEnabled) {
-      startInFlightRef.current = false;
-      stopListening();
-      return;
-    }
-
     if (!hasPermission) {
       setManualPause(false);
       setPhase("request-permission");
       setStatusMessage(status.allowMic);
+      startInFlightRef.current = false;
       stopListening();
       resetTranscript();
       return;
@@ -103,6 +98,7 @@ export function useInterviewManager(): InterviewManagerReturn {
       setManualPause(false);
       setPhase("paste-description");
       setStatusMessage(status.nameRequired);
+      startInFlightRef.current = false;
       stopListening();
       resetTranscript();
       return;
@@ -112,12 +108,15 @@ export function useInterviewManager(): InterviewManagerReturn {
       setManualPause(false);
       setPhase("paste-description");
       setStatusMessage(status.descriptionRequired);
+      startInFlightRef.current = false;
       stopListening();
       resetTranscript();
       return;
     }
 
-    if (manualPause) {
+    if (manualPause || !autoListeningEnabled) {
+      startInFlightRef.current = false;
+      stopListening();
       setPhase("paused");
       setStatusMessage(status.paused);
       return;
@@ -463,13 +462,13 @@ export function useInterviewManager(): InterviewManagerReturn {
       return;
     }
 
-    setAutoListeningEnabled(true);
-
     const trimmedName = candidateName.trim();
     if (!trimmedName) {
       setStatusMessage(status.nameRequired);
       return;
     }
+
+    resetAnalysisResults();
 
     const availability = await writerGlobal.availability();
 
@@ -487,9 +486,7 @@ export function useInterviewManager(): InterviewManagerReturn {
       setCurrentQuestionIndex(0);
       setInterviewComplete(false);
       setIsInterviewActive(false);
-      setAnalysisResults([]);
-      setAnalysisError(null);
-      setIsAnalyzingAnswers(false);
+      resetAnalysisResults();
 
       startLoader(keywordLoader.id, keywordLoader.messages);
 
@@ -589,6 +586,7 @@ export function useInterviewManager(): InterviewManagerReturn {
     loaders.keywords,
     loaders.questions,
     logs.noKeywordsReturned,
+    resetAnalysisResults,
     questionCount,
     startLoader,
     status.nameRequired,
