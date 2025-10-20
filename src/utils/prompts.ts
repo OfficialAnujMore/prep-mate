@@ -64,6 +64,8 @@ export const buildQuestionPrompt = ({
       : difficulty === "hard"
       ? "challenging, senior-level"
       : "balanced, mid-level";
+  const introGreeting = targetName ? `Hi ${targetName}` : "Hi there";
+  const introQuestion = `${introGreeting}, could you please walk me through your background?`;
 
   return [
     "You are an expert technical interviewer.",
@@ -80,10 +82,11 @@ export const buildQuestionPrompt = ({
     "3) Do not include numbering, bullets, headings, notes, or explanations.",
     "4) Questions must be unique (no duplicates or near-duplicates).",
     "5) Ground questions ONLY in the provided keywords; do not invent tools/tech that aren’t present.",
-    "6) If no meaningful technical keywords are present, return an empty list (no generic questions).",
+    `6) Produce exactly ${questionCount} questions—no more, no fewer. If you overshoot, remove extras before responding.`,
+    "7) If no meaningful technical keywords are present, return an empty list (no generic questions).",
     "",
     "Ordering Rules:",
-    `- Q1: a brief self-introduction icebreaker addressing ${addressedName} by name if provided (e.g., “To start, could you introduce yourself?”).`,
+    `- Q1 MUST be exactly: "${introQuestion}".`,
     "- Q2..Q(n-1): cover the provided keywords (mix fundamentals, applied problem-solving, design, trade-offs).",
     "- Qn: ask motivation/fit for the role (e.g., “Why do you think you’re a strong fit for this role?”).",
     "",

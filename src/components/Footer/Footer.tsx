@@ -1,6 +1,7 @@
 import styles from "./Footer.module.css";
 
 export function Footer() {
+  const currentYear = new Date().getFullYear();
   return (
     <footer className={styles.footer}>
       <p className={styles.text}>
@@ -17,6 +18,9 @@ export function Footer() {
         >
           Anuj More
         </a>
+      </p>
+       <p className={styles.text}>
+        v1.0.0 @{currentYear}
       </p>
     </footer>
   );
