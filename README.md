@@ -23,7 +23,8 @@ PrepMate solves this problem by offering a **free, private, and accessible** moc
 
 - **Writer** – Analyse the job description, extract the keywords, generate questions and analyse user answer
 
-> These APIs currently require Google Chrome desktop versions 137–142 on Windows 10/11, macOS 13+, Linux, or Chromebook Plus devices running Platform 16389.0.0 or later.
+> These APIs currently require Google Chrome desktop versions 137–142 on Windows 10/11, macOS 13+, Linux, or Chromebook Plus devices running Platform 16389.0.0 or later. 
+> Source: https://developer.chrome.com/docs/ai/writer-api#hardware-requirements
 
 ## Prerequisites
 
