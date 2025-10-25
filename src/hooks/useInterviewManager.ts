@@ -512,7 +512,6 @@ export function useInterviewManager(): InterviewManagerReturn {
         if (sessionToken !== sessionTokenRef.current) {
           return;
         }
-        console.error("Failed to generate keywords", error);
         setStatusMessage(errors.keywordsUnavailable);
         return;
       } finally {
@@ -528,7 +527,6 @@ export function useInterviewManager(): InterviewManagerReturn {
         !Array.isArray(keywordGenerator.keywords) ||
         keywordGenerator.keywords.length === 0
       ) {
-        console.warn(logs.noKeywordsReturned);
         setStatusMessage(errors.noKeywordsFound);
         return;
       }
@@ -563,7 +561,6 @@ export function useInterviewManager(): InterviewManagerReturn {
         if (sessionToken !== sessionTokenRef.current) {
           return;
         }
-        console.error("Failed to generate questions", error);
         setStatusMessage(errors.questionsUnavailable);
         return;
       } finally {

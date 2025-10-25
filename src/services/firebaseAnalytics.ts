@@ -19,7 +19,6 @@ export const initFirebaseAnalytics = () => {
   if (analytics || typeof window === 'undefined') return;
 
   if (!isConfigComplete()) {
-    console.warn('Firebase analytics skipped: configuration values are missing.');
     return;
   }
 

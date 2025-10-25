@@ -14,11 +14,8 @@ const useDownloadManager = () => {
     (async () => {
       try {
         const a = await (self as any).Writer.availability();
-        console.log("Writer.availability() status", a);
-
         setAvailability(a);
       } catch (err) {
-        console.error("Failed to check Writer availability", err);
         setAvailability("unavailable");
       }
     })();
@@ -26,7 +23,6 @@ const useDownloadManager = () => {
 
   // TODO: Import the hardcoded label and tone from a constant file
   const writerStatus = useMemo(() => {
-    console.log(`Writer status ${availability}`);
     switch (availability) {
       case "available":
         return {
@@ -79,13 +75,8 @@ const useDownloadManager = () => {
     try {
       let w;
       if (availability === "available") {
-        console.log("Writer availability status inside onStartDownload");
-
         // w = await (self as any).Writer.create(options);
-        console.log("Writer created with options");
       } else {
-        console.log("Writer not available");
-        console.log("----Downloading writer----");
         setAvailability("downloading");
 
         w = await (self as any).Writer.create({
@@ -93,18 +84,15 @@ const useDownloadManager = () => {
           monitor(m: any) {
             m.addEventListener("downloadprogress", (e: any) => {
               const pct = Math.round((e.loaded ?? 0) * 100);
-              console.log(`Downloaded ${pct}%`);
             });
           },
         });
       }
       const a = await (self as any).Writer.availability();
-      console.log("Writer.availability() status", a);
 
       setAvailability(a);
     } catch (err) {
       setAvailability("error");
-      console.error("Failed to create Writer", err);
     }
   };
 

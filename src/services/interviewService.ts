@@ -44,7 +44,6 @@ export const verifyJobDescription = async (
   const result = await writer.write(analyseJD(jobDescription));
 
   const cleaned = sanitizeWriterResponse(result);
-  console.log(cleaned);
   const parsed = JSON.parse(cleaned);
   
 
@@ -61,7 +60,6 @@ export const generateInterviewQuestions = async ({
   difficulty,
   candidateName,
 }: GenerateQuestionParams): Promise<QuestionResponse> => {
-  console.log({questionCount});
   
   const writer = await Writer.create(QUESTION_PROMPT_OPTIONS);
   const result = await writer.write(
@@ -72,8 +70,6 @@ export const generateInterviewQuestions = async ({
       candidateName,
     })
   );
-  console.log(result);
-  
   const cleaned = sanitizeWriterResponse(result);
   return JSON.parse(cleaned);
 };
